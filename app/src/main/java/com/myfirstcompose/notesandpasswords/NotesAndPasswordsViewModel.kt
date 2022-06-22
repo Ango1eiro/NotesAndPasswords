@@ -16,7 +16,7 @@ import java.io.File
 
 class NotesAndPasswordsViewModel(application: Application) : ViewModel() {
 
-    val allDataBaseNaps: LiveData<List<DataBaseNap>>
+    private val allDataBaseNaps: LiveData<List<DataBaseNap>>
     val allNaps: LiveData<List<SimpleNap>>
     private val repository: NapRepository
 
@@ -31,7 +31,7 @@ class NotesAndPasswordsViewModel(application: Application) : ViewModel() {
 
         allDataBaseNaps = repository.allNaps
         allNaps = Transformations.map(allDataBaseNaps){ data -> data.map { SimpleNap(id = it.id, title = it.title, image = it.image) }  }
-//    searchResults = repository.searchResults
+
     }
 
     fun saveNap(nap: Nap) {
@@ -39,33 +39,6 @@ class NotesAndPasswordsViewModel(application: Application) : ViewModel() {
         repository.saveNap(nap)
     }
 
-//    fun processImage() {
-//        if (isUriExternal(nap.image)){
-//            val dir = File(context.filesDir,"images")
-//            if(!dir.exists()){
-//                dir.mkdir();
-//            }
-//            try {
-//
-//            } catch (e : Exception){
-//                e.printStackTrace();
-//            }
-//        }
-//    }
-
-    fun isUriExternal(stringUri:String): Boolean {
-        return (stringUri.contains("com.android.providers"))
-
-    }
-//
-//    fun insertProduct(product: Product) {
-//        repository.insertProduct(product)
-//    }
-//
-//    fun findProduct(name: String) {
-//        repository.findProduct(name)
-//    }
-//
     fun deleteNap(id: Long) {
         repository.deleteNap(id)
     }
@@ -95,25 +68,3 @@ class NotesAndPasswordsViewModel(application: Application) : ViewModel() {
     }
 
 }
-
-//fun getNotesAndPasswordsList() = List(20) { i -> Nap(
-//    id = i.toLong(),
-//    title = "NAP beautiful title #$i",
-//    notes = List(5) { i ->
-//        Note(
-//            id = i.toLong(),
-//            title = "Title #$i",
-//            content = "Content #$i"
-//        )},
-//    credentials = List(3) { i ->
-//        Credential(
-//            id = i.toLong(),
-//            title = "Title #$i",
-//            login = "Login #$i",
-//            password = "Password #$i"
-//        )
-//
-//    }
-//)
-
-//}

@@ -37,7 +37,4 @@ interface NotesAndPasswordsDao {
     @Query("SELECT * FROM naps WHERE id = :id")
     fun getFullNap(id: Long) : DataBaseFullNap
 
-    @Query("SELECT * FROM naps WHERE id = :id")
-    fun getFullNapLive(id: Long) : LiveData<DataBaseFullNap>
-
 }

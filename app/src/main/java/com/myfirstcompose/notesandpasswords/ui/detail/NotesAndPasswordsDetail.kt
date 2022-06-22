@@ -1,15 +1,12 @@
 package com.myfirstcompose.notesandpasswords.ui.detail
 
 import android.Manifest
-import android.annotation.SuppressLint
-import android.content.Context
 import android.graphics.Bitmap
 import android.graphics.ImageDecoder
 import android.net.Uri
 import android.os.Build
 import android.provider.MediaStore
 import android.util.Log
-import android.webkit.MimeTypeMap
 import android.widget.Toast
 import androidx.activity.compose.rememberLauncherForActivityResult
 import androidx.activity.result.contract.ActivityResultContracts
@@ -57,16 +54,11 @@ import com.myfirstcompose.notesandpasswords.R
 import com.myfirstcompose.notesandpasswords.data.Credential
 import com.myfirstcompose.notesandpasswords.data.Nap
 import com.myfirstcompose.notesandpasswords.data.Note
-import com.myfirstcompose.notesandpasswords.ui.theme.PinkLight
 import com.myfirstcompose.notesandpasswords.ui.theme.PinkSuperLight
+import com.myfirstcompose.notesandpasswords.utils.createCopyAndReturnRealPath
 import kotlinx.coroutines.launch
-import java.io.File
-import java.io.FileOutputStream
-import java.io.IOException
-import java.io.OutputStream
 
 
-@SuppressLint("UnrememberedMutableState")
 @Composable
 fun NotesAndPasswordsDetail(id: Long, viewModel: NotesAndPasswordsViewModel, onNavigateBack: () -> Unit) {
 
@@ -90,40 +82,21 @@ fun NotesAndPasswordsDetail(id: Long, viewModel: NotesAndPasswordsViewModel, onN
             })
 
         }
-//        initialised = true
     }
     Log.v("NotesAndPasswordsDetail","initialised - $initialised")
 
     val nap by viewModel.currentNap.observeAsState()
 
-//    val lifecycleOwner: LifecycleOwner = LocalLifecycleOwner.current
-//    DisposableEffect(lifecycleOwner) {
-//        // Create an observer that triggers our remembered callbacks
-//        // for sending analytics events
-//        val observer = LifecycleEventObserver { _, event ->
-//            if (event == Lifecycle.Event.ON_START) {
-//            } else if (event == Lifecycle.Event.ON_STOP) {
-//                viewModel.resetCurrentNap()
-//            }
-//        }
-//
-//        // Add the observer to the lifecycle
-//        lifecycleOwner.lifecycle.addObserver(observer)
-//
-//        // When the effect leaves the Composition, remove the observer
-//        onDispose {
-//            lifecycleOwner.lifecycle.removeObserver(observer)
-//        }
-//    }
-
     if (nap != null && initialised) {
         Log.v("NotesAndPasswordsDetail","nap:$nap")
-//        var napTitle by remember {
-//            mutableStateOf(nap!!.title)
-//        }
 
         var currentList by remember {
-            mutableStateOf(NotesAndPasswordsCurrentList.Notes)
+            if (nap!!.notes.isEmpty() && !nap!!.credentials.isEmpty()){
+                mutableStateOf(NotesAndPasswordsCurrentList.Passwords)
+            } else
+            {
+                mutableStateOf(NotesAndPasswordsCurrentList.Notes)
+            }
         }
         val onTitleChange : (String) -> Unit = {
                 newTitle ->  nap!!.title.value = newTitle
@@ -146,10 +119,8 @@ fun NotesAndPasswordsDetail(id: Long, viewModel: NotesAndPasswordsViewModel, onN
         }
         val onFabSaveClick = {
             nap!!.apply {
-//                title = napTitle
                 viewModel.saveNap(this)
                 onNavigateBack()
-
             }
             Unit
         }
@@ -167,8 +138,6 @@ fun NotesAndPasswordsDetail(id: Long, viewModel: NotesAndPasswordsViewModel, onN
         }
 
         NotesAndPasswordsDetailStateless(
-            id = id,
-            viewModel = viewModel,
             nap = nap!!,
             currentList = currentList,
             onTitleChange = onTitleChange,
@@ -182,8 +151,6 @@ fun NotesAndPasswordsDetail(id: Long, viewModel: NotesAndPasswordsViewModel, onN
 
 @Composable
 fun NotesAndPasswordsDetailStateless(
-    id: Long,
-    viewModel: NotesAndPasswordsViewModel,
     nap: Nap,
     currentList: NotesAndPasswordsCurrentList,
     onTitleChange: (String) -> Unit,
@@ -194,7 +161,6 @@ fun NotesAndPasswordsDetailStateless(
 ) {
 
     Log.v("NotesAndPasswordsDetail","$currentRecomposeScope")
-
 
     Card(
         modifier = Modifier
@@ -269,7 +235,7 @@ fun NotesAndPasswordsDetailTop(
     val launcher = rememberLauncherForActivityResult(contract =
     ActivityResultContracts.GetContent()) { uri: Uri? ->
         uri?.let {
-            imageUri = createCopyAndReturnRealPath(context = context,uri = it,id = nap.id.toString())
+            imageUri = createCopyAndReturnRealPath(context = context,uri = it)
         }
     }
 
@@ -277,7 +243,6 @@ fun NotesAndPasswordsDetailTop(
         if (Build.VERSION.SDK_INT < 28) {
             bitmap.value = MediaStore.Images
                 .Media.getBitmap(context.contentResolver,it)
-
         } else {
             val source = ImageDecoder
                 .createSource(context.contentResolver,it)
@@ -286,9 +251,7 @@ fun NotesAndPasswordsDetailTop(
             } catch (e: Exception) {
                 Toast.makeText(LocalContext.current,e.localizedMessage,Toast.LENGTH_SHORT).show()
             }
-
         }
-
         nap.image = it.toString()
         Log.v("NotesAndPasswordsDetail","Image assigned")
     }
@@ -331,29 +294,26 @@ fun NotesAndPasswordsDetailTop(
             Spacer(modifier = Modifier.height(12.dp))
             if (currentList == NotesAndPasswordsCurrentList.Notes)
             {
-                Text(
-                    text = "Notes",
-                    fontSize = 36.sp,
-                    color = MaterialTheme.colors.secondary,
-                    modifier = Modifier
-                        .padding(start = 8.dp)
-                    ,
-                    textAlign = TextAlign.Center
-                    )
+                CurrentListTopText(text = "Notes")
             } else
             {
-                Text(
-                    text = "Passwords",
-                    fontSize = 36.sp,
-                    color = MaterialTheme.colors.secondary,
-                    modifier = Modifier
-                        .padding(start = 8.dp)
-                    ,
-                    textAlign = TextAlign.Center
-                )
+                CurrentListTopText(text = "Passwords")
             }
         }
     }
+}
+
+@Composable
+fun CurrentListTopText(text: String){
+    Text(
+        text = text,
+        fontSize = 36.sp,
+        color = MaterialTheme.colors.secondary,
+        modifier = Modifier
+            .padding(start = 8.dp)
+        ,
+        textAlign = TextAlign.Center
+    )
 }
 
 @OptIn(ExperimentalPermissionsApi::class)
@@ -448,10 +408,6 @@ fun NotesAndPasswordsDetailBottom(
                     offsetY += dragAmount.y
                 }
             }
-//            .border(
-//                width = 2.dp,
-//                color = MaterialTheme.colors.primary,
-//            )
 
     ){
         when (currentList) {
@@ -467,7 +423,6 @@ fun NotesList(notes : List<Note>) {
     Box(
         Modifier
             .padding(8.dp)
-//            .clip(RoundedCornerShape(5.dp))
             .background(
                 color = PinkSuperLight,
                 shape = RoundedCornerShape(5.dp)
@@ -503,45 +458,29 @@ fun NoteElement(note: Note) {
                     .fillMaxSize()
             ) {
                 Text(text = note.title)
-//                Text(text = note.content)
             }
         } else {
-            Box(
-
-            ) {
+            Box {
                 Column(
                     modifier = Modifier
                         .fillMaxSize(),
                 ) {
-                    TextField(
-                        value = titleState,
-                        label = {Text(text = "Title")},
+                    NoteElementTextField(
+                        stateValue = titleState,
+                        labelText = "Title",
                         onValueChange = {
                             note.title = it
                             titleState = it
-                        },
-                        keyboardOptions = KeyboardOptions(capitalization = KeyboardCapitalization.Sentences),
-                        colors = TextFieldDefaults.textFieldColors(
-                            backgroundColor = Color.White,
-                            unfocusedIndicatorColor = MaterialTheme.colors.secondary,
-                            unfocusedLabelColor = MaterialTheme.colors.secondary),
-                        modifier = Modifier
-                            .fillMaxSize()
+                        }
                     )
-                    TextField(
-                        value = contentState,
-                        label = {Text(text = "Content")},
+                    NoteElementTextField(
+                        stateValue = contentState,
+                        labelText = "Content",
                         onValueChange = {
                             note.content = it
                             contentState = it
-                        },
-                        keyboardOptions = KeyboardOptions(capitalization = KeyboardCapitalization.Sentences),
-                        colors = TextFieldDefaults.textFieldColors(
-                            backgroundColor = Color.White,
-                            unfocusedIndicatorColor = MaterialTheme.colors.secondary,
-                            unfocusedLabelColor = MaterialTheme.colors.secondary),
-                        modifier = Modifier
-                            .fillMaxSize())
+                        }
+                    )
                 }
                 Image(
                     painter = painterResource(id = R.drawable.close_fullscreen_48px),
@@ -557,11 +496,30 @@ fun NoteElement(note: Note) {
 }
 
 @Composable
+fun NoteElementTextField(
+    stateValue: String,
+    labelText: String,
+    onValueChange: (String) -> Unit
+
+){
+    TextField(
+        value = stateValue,
+        label = {Text(text = labelText)},
+        onValueChange = onValueChange,
+        keyboardOptions = KeyboardOptions(capitalization = KeyboardCapitalization.Sentences),
+        colors = TextFieldDefaults.textFieldColors(
+            backgroundColor = Color.White,
+            unfocusedIndicatorColor = MaterialTheme.colors.secondary,
+            unfocusedLabelColor = MaterialTheme.colors.secondary),
+        modifier = Modifier
+            .fillMaxSize())
+}
+
+@Composable
 fun PasswordsList(credentials : List<Credential>) {
     Box(
         Modifier
             .padding(8.dp)
-//            .clip(RoundedCornerShape(5.dp))
             .background(
                 color = PinkSuperLight,
                 shape = RoundedCornerShape(5.dp)
@@ -598,60 +556,39 @@ fun CredentialElement(credential : Credential) {
                     .fillMaxSize(),
             ) {
                 Text(text = titleState)
-//                Text(text = loginState)
-//                Text(text = passwordState)
             }
         } else
         {
-            Box(
-
-            ){
+            Box {
                 Column(
                     modifier = Modifier
                         .fillMaxSize(),
                 ) {
-                    TextField(
-                        value = titleState,
-                        label = {Text(text = "Title")},
+                    CredentialElementTextField(
+                        stateValue = titleState,
+                        labelText = "Title",
                         onValueChange = {
                             credential.title = it
                             titleState = it
                                         },
-                        keyboardOptions = KeyboardOptions(capitalization = KeyboardCapitalization.Sentences),
-                        colors = TextFieldDefaults.textFieldColors(
-                            backgroundColor = Color.White,
-                            unfocusedIndicatorColor = MaterialTheme.colors.secondary,
-                            unfocusedLabelColor = MaterialTheme.colors.secondary),
-                        modifier = Modifier
-                            .fillMaxSize()
+                        keyboardOptions = KeyboardOptions(capitalization = KeyboardCapitalization.Sentences)
                     )
-                    TextField(
-                        value = loginState,
-                        label = {Text(text = "Login")},
+                    CredentialElementTextField(
+                        stateValue = loginState,
+                        labelText = "Login",
                         onValueChange = {
                             credential.login = it
                             loginState = it
-                                        },
-                        colors = TextFieldDefaults.textFieldColors(
-                            backgroundColor = Color.White,
-                            unfocusedIndicatorColor = MaterialTheme.colors.secondary,
-                            unfocusedLabelColor = MaterialTheme.colors.secondary),
-                        modifier = Modifier
-                            .fillMaxSize()
+                                        }
                     )
-                    TextField(
-                        value = passwordState,
-                        label = {Text(text = "Password")},
+                    CredentialElementTextField(
+                        stateValue = passwordState,
+                        labelText = "Password",
                         onValueChange = {
                             credential.password = it
                             passwordState = it
-                                        },
-                        colors = TextFieldDefaults.textFieldColors(
-                            backgroundColor = Color.White,
-                            unfocusedIndicatorColor = MaterialTheme.colors.secondary,
-                            unfocusedLabelColor = MaterialTheme.colors.secondary),
-                        modifier = Modifier
-                            .fillMaxSize())
+                                        }
+                    )
                 }
                 Image(
                     painter = painterResource(id = R.drawable.close_fullscreen_48px),
@@ -666,37 +603,30 @@ fun CredentialElement(credential : Credential) {
     }
 }
 
-@Preview
 @Composable
-fun NotesAndPasswordsDetailPreview() {
-    NotesAndPasswordsDetail(id = 3, viewModel(),{})
+fun CredentialElementTextField(
+    stateValue: String,
+    labelText: String,
+    onValueChange: (String) -> Unit,
+    keyboardOptions : KeyboardOptions = KeyboardOptions()
+) {
+
+    TextField(
+        value = stateValue,
+        label = {Text(text = labelText)},
+        onValueChange = onValueChange,
+        keyboardOptions = keyboardOptions,
+        colors = TextFieldDefaults.textFieldColors(
+            backgroundColor = Color.White,
+            unfocusedIndicatorColor = MaterialTheme.colors.secondary,
+            unfocusedLabelColor = MaterialTheme.colors.secondary),
+        modifier = Modifier
+            .fillMaxSize()
+    )
+
 }
 
 enum class NotesAndPasswordsCurrentList {
     Notes, Passwords
-}
-
-fun createCopyAndReturnRealPath(context: Context, uri: Uri, id: String): Uri? {
-    val contentResolver = context.contentResolver ?: return null
-//    val mimeType = getMimeType(uri).getSafe()
-//    val fileExt = "." + mimeType.substring(mimeType.indexOf('/') + 1)
-    val filePath: String = (context.filesDir.absolutePath + File.separator
-            + uri.lastPathSegment)
-    val file = File(filePath)
-    try {
-        file.parentFile.mkdirs()
-        file.createNewFile()
-        val inputStream = contentResolver.openInputStream(uri) ?: return null //crashing here
-        val outputStream: OutputStream = FileOutputStream(file)
-        val buf = ByteArray(1024)
-        var len: Int
-        while (inputStream.read(buf).also { len = it } > 0) outputStream.write(buf, 0, len)
-        outputStream.close()
-        inputStream.close()
-    } catch (ignore: IOException) {
-        return null
-    }
-    Log.v("NotesAndPasswordsDetail","Absolute path - $file.absolutePath")
-    return Uri.fromFile(file)
 }
 

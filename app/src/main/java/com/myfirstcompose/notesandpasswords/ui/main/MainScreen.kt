@@ -33,10 +33,13 @@ import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.res.painterResource
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.text.style.TextAlign
+import androidx.compose.ui.tooling.preview.Preview
 import androidx.compose.ui.unit.dp
 import com.myfirstcompose.notesandpasswords.NotesAndPasswordsViewModel
 import com.myfirstcompose.notesandpasswords.R
 import com.myfirstcompose.notesandpasswords.data.SimpleNap
+import com.myfirstcompose.notesandpasswords.getSimpleNapList
+import com.myfirstcompose.notesandpasswords.ui.theme.NotesAndPasswordsTheme
 import kotlinx.coroutines.launch
 
 @Composable
@@ -62,15 +65,15 @@ fun MainBody(
 @Composable
 fun NotesAndPasswordsList(
     list: List<SimpleNap>,
-    onListElementClick: (Long) -> Unit,
-    onListElementDismiss: (Long) -> Unit,
-    onFabClick: () -> Unit,
-    modifier: Modifier = Modifier,
+    onListElementClick: (Long) -> Unit = {},
+    onListElementDismiss: (Long) -> Unit = {},
+    onFabClick: () -> Unit = {},
+
 ) {
 
     Box() {
         LazyColumn(
-            modifier = modifier
+            modifier = Modifier
                 .padding(8.dp)
                 .fillMaxSize(),
             horizontalAlignment = Alignment.CenterHorizontally
@@ -144,7 +147,7 @@ fun NotesAndPasswordsListItem(
             }
             Image(
                 painter = painter,
-//                colorFilter = ColorFilter.tint(color = MaterialTheme.colors.secondary),
+                colorFilter = colorFilter,
                 contentDescription = null,
                 contentScale = ContentScale.Crop,
                 modifier = Modifier
@@ -194,60 +197,6 @@ fun SwipeToDismissElement(
         state = dismissState,
         /***  create dismiss alert Background */
         background = {
-//            val color = when (dismissState.dismissDirection) {
-//                DismissDirection.StartToEnd -> Color.Green
-//                DismissDirection.EndToStart -> Color.Red
-//                null -> Color.Transparent
-//            }
-//            val direction = dismissState.dismissDirection
-//
-//            if (direction == DismissDirection.StartToEnd) {
-//                Box(
-//                    modifier = Modifier
-//                        .fillMaxSize()
-////                        .background(color)
-//                        .padding(8.dp)
-//                ) {
-//                    Column(modifier = Modifier.align(Alignment.CenterStart)) {
-//                        Icon(
-//                            imageVector = Icons.Default.ArrowForward,
-//                            contentDescription = null,
-//                            tint = Color.White,
-//                            modifier = Modifier.align(Alignment.CenterHorizontally)
-//                        )
-//                        Text(
-//                            text = "Move to Archive", fontWeight = FontWeight.Bold,
-//                            textAlign = TextAlign.Center,
-//                            color = Color.White
-//                        )
-//                    }
-//
-//                }
-//            } else {
-//                Box(
-//                    modifier = Modifier
-//                        .fillMaxSize()
-//                        .background(color)
-//                        .padding(8.dp)
-//                ) {
-//                    Column(modifier = Modifier.align(Alignment.CenterEnd)) {
-//                        Icon(
-//                            imageVector = Icons.Default.ArrowBack,
-//                            contentDescription = null,
-//                            tint = Color.White,
-//                            modifier = Modifier.align(Alignment.CenterHorizontally)
-//                        )
-//                        Spacer(modifier = Modifier.heightIn(5.dp))
-//                        Text(
-//                            text = "Move to Bin",
-//                            textAlign = TextAlign.Center,
-//                            fontWeight = FontWeight.Bold,
-//                            color = Color.LightGray
-//                        )
-//
-//                    }
-//                }
-//            }
         },
         /**** Dismiss Content */
         dismissContent = {
@@ -260,8 +209,8 @@ fun SwipeToDismissElement(
 
 @Composable
 fun AlertDialogBeforeDelete(
-    onYes: () -> Unit,
-    onNo: () -> Unit,
+    onYes: () -> Unit = {},
+    onNo: () -> Unit = {},
 ) {
 
     val showDialog = remember { mutableStateOf(true)  }
@@ -302,6 +251,31 @@ fun AlertDialogBeforeDelete(
 
 }
 
+@Preview(showBackground = true)
+@Composable
+fun NotesAndPasswordsListPreview() {
+    NotesAndPasswordsTheme {
+        NotesAndPasswordsList(
+            list = getSimpleNapList()
+        )
+    }
+}
+
+@Preview(showBackground = true)
+@Composable
+fun NotesAndPasswordsListItemPreview() {
+    NotesAndPasswordsTheme {
+        NotesAndPasswordsListItem(SimpleNap(id = 55, title = "Test title", image = ""))
+    }
+}
+
+@Preview(showBackground = true)
+@Composable
+fun AlertDialogBeforeDeletePreview() {
+    NotesAndPasswordsTheme {
+        AlertDialogBeforeDelete()
+    }
+}
 
 
 

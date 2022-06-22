@@ -33,13 +33,6 @@ class MainActivity : ComponentActivity() {
     }
 }
 
-
-@Preview(showBackground = true)
-@Composable
-fun DefaultPreview() {
-    NotesAndPasswordsApp()
-}
-
 @Composable
 fun NotesAndPasswordsApp() {
     NotesAndPasswordsTheme {

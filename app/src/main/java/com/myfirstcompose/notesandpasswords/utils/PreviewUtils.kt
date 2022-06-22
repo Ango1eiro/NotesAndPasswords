@@ -1,6 +1,6 @@
 package com.myfirstcompose.notesandpasswords
 
-import kotlin.random.Random
+import com.myfirstcompose.notesandpasswords.data.SimpleNap
 
 fun getImageIdByNumber(number:Long) : Int {
     return when(number.toInt()){
@@ -10,4 +10,11 @@ fun getImageIdByNumber(number:Long) : Int {
         4 -> R.drawable.image4
         else -> R.drawable.image5
     }
+}
+
+fun getSimpleNapList() = List(20) { i ->
+    SimpleNap(
+        id = i.toLong(),
+        title = "NAP beautiful title #$i",
+        image = "")
 }
