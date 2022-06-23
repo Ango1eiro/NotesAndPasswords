@@ -1,8 +1,5 @@
 package com.myfirstcompose.notesandpasswords
 
-import androidx.compose.material.icons.Icons
-import androidx.compose.ui.graphics.vector.ImageVector
-
 enum class NotesAndPasswordsListScreen(
 
 ) {

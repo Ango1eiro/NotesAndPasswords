@@ -1,8 +1,6 @@
 package com.myfirstcompose.notesandpasswords
 
-import androidx.compose.runtime.mutableStateListOf
 import androidx.compose.runtime.mutableStateOf
-import androidx.compose.runtime.snapshots.SnapshotStateList
 import androidx.compose.runtime.toMutableStateList
 import com.myfirstcompose.notesandpasswords.data.Credential
 import com.myfirstcompose.notesandpasswords.data.Nap
@@ -15,7 +13,6 @@ fun DataBaseFullNap.toNap() = Nap(
     id = this.dataBaseNap.id,
     title = mutableStateOf(this.dataBaseNap.title),
     image = this.dataBaseNap.image,
-//    notes = mutableStateListOf(this.dataBaseNotes.map { it.toNote() }),
     notes = this.dataBaseNotes.map { it.toNote() }.toMutableStateList(),
     credentials = this.dataBaseCredentials.map { it.toCredential() }.toMutableStateList(),
 )

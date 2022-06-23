@@ -42,10 +42,8 @@ import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.res.painterResource
 import androidx.compose.ui.text.input.KeyboardCapitalization
 import androidx.compose.ui.text.style.TextAlign
-import androidx.compose.ui.tooling.preview.Preview
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
-import androidx.lifecycle.viewmodel.compose.viewModel
 import com.google.accompanist.permissions.ExperimentalPermissionsApi
 import com.google.accompanist.permissions.PermissionStatus
 import com.google.accompanist.permissions.rememberPermissionState
@@ -57,7 +55,6 @@ import com.myfirstcompose.notesandpasswords.data.Note
 import com.myfirstcompose.notesandpasswords.ui.theme.PinkSuperLight
 import com.myfirstcompose.notesandpasswords.utils.createCopyAndReturnRealPath
 import kotlinx.coroutines.launch
-
 
 @Composable
 fun NotesAndPasswordsDetail(id: Long, viewModel: NotesAndPasswordsViewModel, onNavigateBack: () -> Unit) {
@@ -169,7 +166,7 @@ fun NotesAndPasswordsDetailStateless(
         elevation = 10.dp
     ) {
         Box {
-            Column() {
+            Column {
                 // Picture and title
                 NotesAndPasswordsDetailTop(
                     currentList = currentList,
@@ -224,7 +221,7 @@ fun NotesAndPasswordsDetailTop(
     }
     Log.v("NotesAndPasswordsDetail","Initial Uri - $initialUri")
     var imageUri by remember {
-        mutableStateOf<Uri?>(initialUri)
+        mutableStateOf(initialUri)
     }
     Log.v("NotesAndPasswordsDetail","Image Uri - $imageUri")
     val context = LocalContext.current
@@ -241,6 +238,7 @@ fun NotesAndPasswordsDetailTop(
 
     imageUri?.let {
         if (Build.VERSION.SDK_INT < 28) {
+            @Suppress("deprecation")
             bitmap.value = MediaStore.Images
                 .Media.getBitmap(context.contentResolver,it)
         } else {
@@ -399,7 +397,7 @@ fun NotesAndPasswordsDetailBottom(
             .pointerInput(Unit) {
                 detectDragGestures { change, dragAmount ->
                     change.consume()
-                    val (x, y) = dragAmount
+                    val (x, _) = dragAmount
                     when {
                         x > 50 -> { onSwipeLeft() }
                         x < -50 -> { onSwipeRight() }

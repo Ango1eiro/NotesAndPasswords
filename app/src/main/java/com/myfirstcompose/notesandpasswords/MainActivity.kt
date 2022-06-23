@@ -10,7 +10,6 @@ import androidx.compose.material.Scaffold
 import androidx.compose.runtime.Composable
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.platform.LocalContext
-import androidx.compose.ui.tooling.preview.Preview
 import androidx.lifecycle.viewmodel.compose.LocalViewModelStoreOwner
 import androidx.lifecycle.viewmodel.compose.viewModel
 import androidx.navigation.NavHostController
@@ -37,7 +36,7 @@ class MainActivity : ComponentActivity() {
 fun NotesAndPasswordsApp() {
     NotesAndPasswordsTheme {
         val navController = rememberNavController()
-        val backstackEntry = navController.currentBackStackEntryAsState()
+//        val backstackEntry = navController.currentBackStackEntryAsState()
         Scaffold(
             modifier = Modifier
                 .fillMaxSize()
@@ -94,7 +93,7 @@ fun NotesAndPasswordsNavHost(
                 id = id,
                 viewModel = viewModel,
                 onNavigateBack = {
-                    navController.navigate(NotesAndPasswordsListScreen.Main.name)
+                    navController.popBackStack()
                 }
             )
         }

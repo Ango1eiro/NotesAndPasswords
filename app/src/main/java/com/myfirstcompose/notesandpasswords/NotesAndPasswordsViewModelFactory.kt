@@ -7,6 +7,7 @@ import androidx.lifecycle.ViewModelProvider
 class NotesAndPasswordsViewModelFactory(val application: Application) :
     ViewModelProvider.Factory {
     override fun <T : ViewModel> create(modelClass: Class<T>): T {
+        @Suppress("UNCHECKED_CAST")
         return NotesAndPasswordsViewModel(application) as T
     }
 }

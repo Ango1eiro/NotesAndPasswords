@@ -5,10 +5,8 @@ import android.graphics.ImageDecoder
 import android.net.Uri
 import android.os.Build
 import android.provider.MediaStore
-import android.util.Log
 import android.widget.Toast
 import androidx.compose.foundation.Image
-import androidx.compose.foundation.background
 import androidx.compose.foundation.clickable
 import androidx.compose.foundation.layout.*
 import androidx.compose.foundation.lazy.LazyColumn
@@ -16,14 +14,11 @@ import androidx.compose.foundation.lazy.items
 import androidx.compose.material.*
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.filled.Add
-import androidx.compose.material.icons.filled.ArrowBack
-import androidx.compose.material.icons.filled.ArrowForward
 import androidx.compose.runtime.*
 import androidx.compose.runtime.livedata.observeAsState
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Alignment.Companion.BottomEnd
 import androidx.compose.ui.Modifier
-import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.graphics.ColorFilter
 import androidx.compose.ui.graphics.asImageBitmap
 import androidx.compose.ui.graphics.painter.BitmapPainter
@@ -31,7 +26,6 @@ import androidx.compose.ui.graphics.painter.Painter
 import androidx.compose.ui.layout.ContentScale
 import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.res.painterResource
-import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.text.style.TextAlign
 import androidx.compose.ui.tooling.preview.Preview
 import androidx.compose.ui.unit.dp
@@ -69,9 +63,9 @@ fun NotesAndPasswordsList(
     onListElementDismiss: (Long) -> Unit = {},
     onFabClick: () -> Unit = {},
 
-) {
+    ) {
 
-    Box() {
+    Box {
         LazyColumn(
             modifier = Modifier
                 .padding(8.dp)
@@ -126,6 +120,7 @@ fun NotesAndPasswordsListItem(
             } else {
                 var bitmap: Bitmap? = null
                 if (Build.VERSION.SDK_INT < 28) {
+                    @Suppress("deprecation")
                     bitmap = MediaStore.Images
                         .Media.getBitmap(context.contentResolver, Uri.parse(nap.image))
 
@@ -138,10 +133,11 @@ fun NotesAndPasswordsListItem(
                         Toast.makeText(LocalContext.current, e.localizedMessage, Toast.LENGTH_SHORT)
                             .show()
                     }
-                    bitmap?.let {
-                        painter = BitmapPainter(it.asImageBitmap())
-                        colorFilter = null
-                    }
+
+                }
+                bitmap?.let {
+                    painter = BitmapPainter(it.asImageBitmap())
+                    colorFilter = null
                 }
 
             }
@@ -182,13 +178,15 @@ fun SwipeToDismissElement(
     val dismissState = rememberDismissState(
         initialValue = DismissValue.Default
     )
-    if (dismissState.isDismissed(DismissDirection.EndToStart)||dismissState.isDismissed(DismissDirection.StartToEnd)){
+    if (dismissState.isDismissed(DismissDirection.EndToStart) || dismissState.isDismissed(
+            DismissDirection.StartToEnd)
+    ) {
         AlertDialogBeforeDelete(
             onYes = {
                 onListElementDismiss(nap.id)
             },
             onNo = {
-                scope.launch { dismissState.reset()  }
+                scope.launch { dismissState.reset() }
             }
         )
     }
@@ -213,7 +211,7 @@ fun AlertDialogBeforeDelete(
     onNo: () -> Unit = {},
 ) {
 
-    val showDialog = remember { mutableStateOf(true)  }
+    val showDialog = remember { mutableStateOf(true) }
 
     if (showDialog.value) {
         AlertDialog(

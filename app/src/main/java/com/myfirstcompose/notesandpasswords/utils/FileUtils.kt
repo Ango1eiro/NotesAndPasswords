@@ -14,7 +14,7 @@ fun createCopyAndReturnRealPath(context: Context, uri: Uri): Uri? {
             + uri.lastPathSegment)
     val file = File(filePath)
     try {
-        file.parentFile.mkdirs()
+        file.parentFile!!.mkdirs()
         file.createNewFile()
         val inputStream = contentResolver.openInputStream(uri) ?: return null //crashing here
         val outputStream: OutputStream = FileOutputStream(file)
