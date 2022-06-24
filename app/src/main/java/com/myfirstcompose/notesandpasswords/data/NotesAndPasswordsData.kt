@@ -21,13 +21,13 @@ data class SimpleNap (
 
 data class Note (
     val id: Long = 0,
-    var title: String = "",
-    var content: String = ""
+    var title: MutableState<String> = mutableStateOf(""),
+    var content: MutableState<String> = mutableStateOf("")
 )
 
 data class Credential (
     val id: Long = 0,
-    var title: String = "",
-    var login: String = "",
-    var password: String = ""
+    var title: MutableState<String> = mutableStateOf(""),
+    var login: MutableState<String> = mutableStateOf(""),
+    var password: MutableState<String> = mutableStateOf("")
 )

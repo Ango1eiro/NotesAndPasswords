@@ -19,13 +19,13 @@ fun DataBaseFullNap.toNap() = Nap(
 
 fun DataBaseNote.toNote() = Note(
     id = this.id,
-    title = this.title,
-    content = this.content
+    title = mutableStateOf(this.title),
+    content = mutableStateOf(this.content)
 )
 
 fun DataBaseCredential.toCredential() = Credential(
     id = this.id,
-    title = this.title,
-    login = this.login,
-    password = this.password
+    title = mutableStateOf(this.title),
+    login = mutableStateOf(this.login),
+    password = mutableStateOf(this.password)
 )

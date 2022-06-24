@@ -21,10 +21,10 @@ interface NotesAndPasswordsDao {
     {
         val id = insertNap(DataBaseNap(id = nap.id, title = nap.title.value, image = nap.image))
         nap.notes.forEach{
-            insertNote(DataBaseNote(napId = id, id = it.id, title = it.title, content = it.content))
+            insertNote(DataBaseNote(napId = id, id = it.id, title = it.title.value, content = it.content.value))
         }
         nap.credentials.forEach{
-            insertCredential(DataBaseCredential(napId = id, id = it.id, title = it.title, login = it.login, password = it.password))
+            insertCredential(DataBaseCredential(napId = id, id = it.id, title = it.title.value, login = it.login.value, password = it.password.value))
         }
     }
 

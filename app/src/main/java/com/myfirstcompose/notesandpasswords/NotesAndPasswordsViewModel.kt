@@ -9,6 +9,7 @@ import com.myfirstcompose.notesandpasswords.room.AppDatabase
 import com.myfirstcompose.notesandpasswords.room.DataBaseNap
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.launch
+import kotlinx.coroutines.withContext
 
 
 class NotesAndPasswordsViewModel(application: Application) : ViewModel() {
@@ -52,6 +53,20 @@ class NotesAndPasswordsViewModel(application: Application) : ViewModel() {
             Log.v("VM", "After _currentNap update")
         }.join()
 
+    }
+
+    suspend fun getNapById(id: Long) : Nap {
+        return withContext(viewModelScope.coroutineContext + Dispatchers.IO) {
+            repository.getDataBaseNapById(id).toNap()
+        }
+    }
+
+    suspend fun getNewOrExistingNapById(id: Long) : Nap {
+        return if (id < 0) {
+            Nap()
+        } else {
+            getNapById(id)
+        }
     }
 
     fun newCurrentNap() {

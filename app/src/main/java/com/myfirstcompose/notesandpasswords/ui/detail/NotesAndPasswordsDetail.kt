@@ -25,7 +25,6 @@ import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.filled.Add
 import androidx.compose.material.icons.filled.Check
 import androidx.compose.runtime.*
-import androidx.compose.runtime.livedata.observeAsState
 import androidx.compose.runtime.saveable.rememberSaveable
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Alignment.Companion.CenterVertically
@@ -57,46 +56,54 @@ import com.myfirstcompose.notesandpasswords.utils.createCopyAndReturnRealPath
 import kotlinx.coroutines.launch
 
 @Composable
-fun NotesAndPasswordsDetail(id: Long, viewModel: NotesAndPasswordsViewModel, onNavigateBack: () -> Unit) {
+fun NotesAndPasswordsDetail(
+    id: Long,
+    viewModel: NotesAndPasswordsViewModel,
+    onNavigateBack: () -> Unit,
+) {
 
     val scope = rememberCoroutineScope()
 
-    Log.v("NotesAndPasswordsDetail","$currentRecomposeScope id - $id")
+    Log.v("NotesAndPasswordsDetail", "$currentRecomposeScope id - $id")
 
-    var initialised by remember {
-        mutableStateOf(false)
+//    var initialised by remember {
+//        mutableStateOf(false)
+//    }
+
+//    Log.v("NotesAndPasswordsDetail","initialised - $initialised")
+//    if(!initialised) {
+//        if (id < 0) {
+//            viewModel.newCurrentNap()
+//            initialised = true
+//        } else {
+//            LaunchedEffect(key1 = id, block = {
+//                viewModel.setCurrentNap(id)
+//                initialised = true
+//            })
+//
+//        }
+//    }
+//    Log.v("NotesAndPasswordsDetail","initialised - $initialised")
+//
+//    val nap by viewModel.currentNap.observeAsState()
+
+    var nap by remember { mutableStateOf<Nap?>(null) }
+    LaunchedEffect(key1 = id) {
+        nap = viewModel.getNewOrExistingNapById(id)
     }
 
-    Log.v("NotesAndPasswordsDetail","initialised - $initialised")
-    if(!initialised) {
-        if (id < 0) {
-            viewModel.newCurrentNap()
-            initialised = true
-        } else {
-            LaunchedEffect(key1 = id, block = {
-                viewModel.setCurrentNap(id)
-                initialised = true
-            })
-
-        }
-    }
-    Log.v("NotesAndPasswordsDetail","initialised - $initialised")
-
-    val nap by viewModel.currentNap.observeAsState()
-
-    if (nap != null && initialised) {
-        Log.v("NotesAndPasswordsDetail","nap:$nap")
+    if (nap != null) {
+        Log.v("NotesAndPasswordsDetail", "nap:$nap")
 
         var currentList by remember {
-            if (nap!!.notes.isEmpty() && !nap!!.credentials.isEmpty()){
+            if (nap!!.notes.isEmpty() && !nap!!.credentials.isEmpty()) {
                 mutableStateOf(NotesAndPasswordsCurrentList.Passwords)
-            } else
-            {
+            } else {
                 mutableStateOf(NotesAndPasswordsCurrentList.Notes)
             }
         }
-        val onTitleChange : (String) -> Unit = {
-                newTitle ->  nap!!.title.value = newTitle
+        val onTitleChange: (String) -> Unit = { newTitle ->
+            nap!!.title.value = newTitle
         }
         val onSwipeRight = {
             scope.launch {
@@ -125,8 +132,7 @@ fun NotesAndPasswordsDetail(id: Long, viewModel: NotesAndPasswordsViewModel, onN
             nap!!.apply {
                 if (currentList == NotesAndPasswordsCurrentList.Notes) {
                     notes.add(Note())
-                } else
-                {
+                } else {
                     credentials.add(Credential())
                 }
 
@@ -149,15 +155,15 @@ fun NotesAndPasswordsDetail(id: Long, viewModel: NotesAndPasswordsViewModel, onN
 @Composable
 fun NotesAndPasswordsDetailStateless(
     nap: Nap,
-    currentList: NotesAndPasswordsCurrentList,
-    onTitleChange: (String) -> Unit,
-    onSwipeRight: () -> Unit,
-    onSwipeLeft: () -> Unit,
-    onFabSaveClick: () -> Unit,
-    onFabAddClick: () -> Unit,
+    currentList: NotesAndPasswordsCurrentList = NotesAndPasswordsCurrentList.Notes,
+    onTitleChange: (String) -> Unit = {},
+    onSwipeRight: () -> Unit = {},
+    onSwipeLeft: () -> Unit = {},
+    onFabSaveClick: () -> Unit = {},
+    onFabAddClick: () -> Unit = {},
 ) {
 
-    Log.v("NotesAndPasswordsDetail","$currentRecomposeScope")
+    Log.v("NotesAndPasswordsDetail", "$currentRecomposeScope")
 
     Card(
         modifier = Modifier
@@ -171,7 +177,6 @@ fun NotesAndPasswordsDetailStateless(
                 NotesAndPasswordsDetailTop(
                     currentList = currentList,
                     nap = nap,
-                    napTitle = nap.title,
                     onTitleChange = onTitleChange
                 )
                 // Notes or passwords
@@ -188,7 +193,7 @@ fun NotesAndPasswordsDetailStateless(
                     .padding(16.dp)
                     .align(Alignment.BottomStart)
             ) {
-                Icon(Icons.Filled.Add,"")
+                Icon(Icons.Filled.Add, "")
             }
             FloatingActionButton(
                 onClick = onFabSaveClick,
@@ -196,7 +201,7 @@ fun NotesAndPasswordsDetailStateless(
                     .padding(16.dp)
                     .align(Alignment.BottomEnd)
             ) {
-                Icon(Icons.Filled.Check,"")
+                Icon(Icons.Filled.Check, "")
             }
 
         }
@@ -210,29 +215,28 @@ fun NotesAndPasswordsDetailStateless(
 fun NotesAndPasswordsDetailTop(
     currentList: NotesAndPasswordsCurrentList,
     nap: Nap,
-    napTitle: MutableState<String>,
     onTitleChange: (String) -> Unit,
 ) {
 
-    val initialUri  = if (nap.image == "") {
+    val initialUri = if (nap.image == "") {
         null
     } else {
         Uri.parse(nap.image)
     }
-    Log.v("NotesAndPasswordsDetail","Initial Uri - $initialUri")
+    Log.v("NotesAndPasswordsDetail", "Initial Uri - $initialUri")
     var imageUri by remember {
         mutableStateOf(initialUri)
     }
-    Log.v("NotesAndPasswordsDetail","Image Uri - $imageUri")
+    Log.v("NotesAndPasswordsDetail", "Image Uri - $imageUri")
     val context = LocalContext.current
-    val bitmap =  remember {
+    val bitmap = remember {
         mutableStateOf<Bitmap?>(null)
     }
-    Log.v("NotesAndPasswordsDetail","bitmap - $bitmap")
+    Log.v("NotesAndPasswordsDetail", "bitmap - $bitmap")
     val launcher = rememberLauncherForActivityResult(contract =
     ActivityResultContracts.GetContent()) { uri: Uri? ->
         uri?.let {
-            imageUri = createCopyAndReturnRealPath(context = context,uri = it)
+            imageUri = createCopyAndReturnRealPath(context = context, uri = it)
         }
     }
 
@@ -240,18 +244,18 @@ fun NotesAndPasswordsDetailTop(
         if (Build.VERSION.SDK_INT < 28) {
             @Suppress("deprecation")
             bitmap.value = MediaStore.Images
-                .Media.getBitmap(context.contentResolver,it)
+                .Media.getBitmap(context.contentResolver, it)
         } else {
             val source = ImageDecoder
-                .createSource(context.contentResolver,it)
+                .createSource(context.contentResolver, it)
             try {
                 bitmap.value = ImageDecoder.decodeBitmap(source)
             } catch (e: Exception) {
-                Toast.makeText(LocalContext.current,e.localizedMessage,Toast.LENGTH_SHORT).show()
+                Toast.makeText(LocalContext.current, e.localizedMessage, Toast.LENGTH_SHORT).show()
             }
         }
         nap.image = it.toString()
-        Log.v("NotesAndPasswordsDetail","Image assigned")
+        Log.v("NotesAndPasswordsDetail", "Image assigned")
     }
 
     Row(
@@ -272,14 +276,17 @@ fun NotesAndPasswordsDetailTop(
         ) {
             Spacer(modifier = Modifier.height(60.dp))
             OutlinedTextField(
-                value = napTitle.value,
+//                value = napTitle.value,
+                value = nap.title.value,
                 onValueChange = {
                     onTitleChange(it)
                 },
-                label = {Text(
-                    text = "Title",
-                    textAlign = TextAlign.Center,
-                )},
+                label = {
+                    Text(
+                        text = "Title",
+                        textAlign = TextAlign.Center,
+                    )
+                },
                 keyboardOptions = KeyboardOptions(capitalization = KeyboardCapitalization.Sentences),
                 colors = TextFieldDefaults.outlinedTextFieldColors(
                     unfocusedBorderColor = MaterialTheme.colors.secondary,
@@ -290,11 +297,9 @@ fun NotesAndPasswordsDetailTop(
                     .padding(start = 8.dp),
             )
             Spacer(modifier = Modifier.height(12.dp))
-            if (currentList == NotesAndPasswordsCurrentList.Notes)
-            {
+            if (currentList == NotesAndPasswordsCurrentList.Notes) {
                 CurrentListTopText(text = "Notes")
-            } else
-            {
+            } else {
                 CurrentListTopText(text = "Passwords")
             }
         }
@@ -302,14 +307,13 @@ fun NotesAndPasswordsDetailTop(
 }
 
 @Composable
-fun CurrentListTopText(text: String){
+fun CurrentListTopText(text: String) {
     Text(
         text = text,
         fontSize = 36.sp,
         color = MaterialTheme.colors.secondary,
         modifier = Modifier
-            .padding(start = 8.dp)
-        ,
+            .padding(start = 8.dp),
         textAlign = TextAlign.Center
     )
 }
@@ -346,14 +350,13 @@ fun TopImageWithPermission(
                     "Storage permission required for this feature to be available. " +
                             "Please grant the permission"
                 }
-            Toast.makeText(LocalContext.current,textToShow,Toast.LENGTH_SHORT).show()
+            Toast.makeText(LocalContext.current, textToShow, Toast.LENGTH_SHORT).show()
             onImageClick = { storagePermissionState.launchPermissionRequest() }
 
         }
     }
 
-
-    if(bitmap.value==null) {
+    if (bitmap.value == null) {
         Image(
             painter = painterResource(id = R.drawable.placeholder_image),
             contentDescription = null,
@@ -389,9 +392,9 @@ fun NotesAndPasswordsDetailBottom(
     nap: Nap,
     onSwipeRight: () -> Unit,
     onSwipeLeft: () -> Unit,
-){
-    var offsetX by remember { mutableStateOf(0f)}
-    var offsetY by remember { mutableStateOf(0f)}
+) {
+    var offsetX by remember { mutableStateOf(0f) }
+    var offsetY by remember { mutableStateOf(0f) }
     Box(
         modifier = Modifier
             .pointerInput(Unit) {
@@ -399,15 +402,19 @@ fun NotesAndPasswordsDetailBottom(
                     change.consume()
                     val (x, _) = dragAmount
                     when {
-                        x > 50 -> { onSwipeLeft() }
-                        x < -50 -> { onSwipeRight() }
+                        x > 50 -> {
+                            onSwipeLeft()
+                        }
+                        x < -50 -> {
+                            onSwipeRight()
+                        }
                     }
                     offsetX += dragAmount.x
                     offsetY += dragAmount.y
                 }
             }
 
-    ){
+    ) {
         when (currentList) {
             NotesAndPasswordsCurrentList.Notes -> NotesList(notes = nap.notes)
             NotesAndPasswordsCurrentList.Passwords -> PasswordsList(credentials = nap.credentials)
@@ -416,7 +423,7 @@ fun NotesAndPasswordsDetailBottom(
 }
 
 @Composable
-fun NotesList(notes : List<Note>) {
+fun NotesList(notes: List<Note>) {
 
     Box(
         Modifier
@@ -440,9 +447,7 @@ fun NotesList(notes : List<Note>) {
 @Composable
 fun NoteElement(note: Note) {
 
-    var expandedState by rememberSaveable { mutableStateOf(false) }
-    var titleState by rememberSaveable { mutableStateOf(note.title) }
-    var contentState by rememberSaveable { mutableStateOf(note.content) }
+    var expandedState by rememberSaveable { mutableStateOf(note.id == 0L) }
 
     Card(
         modifier = Modifier
@@ -455,7 +460,7 @@ fun NoteElement(note: Note) {
                 modifier = Modifier
                     .fillMaxSize()
             ) {
-                Text(text = note.title)
+                Text(text = note.title.value)
             }
         } else {
             Box {
@@ -464,19 +469,17 @@ fun NoteElement(note: Note) {
                         .fillMaxSize(),
                 ) {
                     NoteElementTextField(
-                        stateValue = titleState,
+                        stateValue = note.title.value,
                         labelText = "Title",
                         onValueChange = {
-                            note.title = it
-                            titleState = it
+                            note.title.value = it
                         }
                     )
                     NoteElementTextField(
-                        stateValue = contentState,
+                        stateValue = note.content.value,
                         labelText = "Content",
                         onValueChange = {
-                            note.content = it
-                            contentState = it
+                            note.content.value = it
                         }
                     )
                 }
@@ -497,12 +500,12 @@ fun NoteElement(note: Note) {
 fun NoteElementTextField(
     stateValue: String,
     labelText: String,
-    onValueChange: (String) -> Unit
+    onValueChange: (String) -> Unit,
 
-){
+    ) {
     TextField(
         value = stateValue,
-        label = {Text(text = labelText)},
+        label = { Text(text = labelText) },
         onValueChange = onValueChange,
         keyboardOptions = KeyboardOptions(capitalization = KeyboardCapitalization.Sentences),
         colors = TextFieldDefaults.textFieldColors(
@@ -514,7 +517,7 @@ fun NoteElementTextField(
 }
 
 @Composable
-fun PasswordsList(credentials : List<Credential>) {
+fun PasswordsList(credentials: List<Credential>) {
     Box(
         Modifier
             .padding(8.dp)
@@ -535,12 +538,9 @@ fun PasswordsList(credentials : List<Credential>) {
 }
 
 @Composable
-fun CredentialElement(credential : Credential) {
+fun CredentialElement(credential: Credential) {
 
-    var expandedState by rememberSaveable { mutableStateOf(false) }
-    var titleState by rememberSaveable { mutableStateOf(credential.title) }
-    var loginState by rememberSaveable { mutableStateOf(credential.login) }
-    var passwordState by rememberSaveable { mutableStateOf(credential.password) }
+    var expandedState by rememberSaveable { mutableStateOf(credential.id == 0L) }
 
     Card(
         modifier = Modifier
@@ -553,39 +553,35 @@ fun CredentialElement(credential : Credential) {
                 modifier = Modifier
                     .fillMaxSize(),
             ) {
-                Text(text = titleState)
+                Text(text = credential.title.value)
             }
-        } else
-        {
+        } else {
             Box {
                 Column(
                     modifier = Modifier
                         .fillMaxSize(),
                 ) {
                     CredentialElementTextField(
-                        stateValue = titleState,
+                        stateValue = credential.title.value,
                         labelText = "Title",
                         onValueChange = {
-                            credential.title = it
-                            titleState = it
-                                        },
+                            credential.title.value = it
+                        },
                         keyboardOptions = KeyboardOptions(capitalization = KeyboardCapitalization.Sentences)
                     )
                     CredentialElementTextField(
-                        stateValue = loginState,
+                        stateValue = credential.login.value,
                         labelText = "Login",
                         onValueChange = {
-                            credential.login = it
-                            loginState = it
-                                        }
+                            credential.login.value = it
+                        }
                     )
                     CredentialElementTextField(
-                        stateValue = passwordState,
+                        stateValue = credential.password.value,
                         labelText = "Password",
                         onValueChange = {
-                            credential.password = it
-                            passwordState = it
-                                        }
+                            credential.password.value = it
+                        }
                     )
                 }
                 Image(
@@ -606,12 +602,12 @@ fun CredentialElementTextField(
     stateValue: String,
     labelText: String,
     onValueChange: (String) -> Unit,
-    keyboardOptions : KeyboardOptions = KeyboardOptions()
+    keyboardOptions: KeyboardOptions = KeyboardOptions(),
 ) {
 
     TextField(
         value = stateValue,
-        label = {Text(text = labelText)},
+        label = { Text(text = labelText) },
         onValueChange = onValueChange,
         keyboardOptions = keyboardOptions,
         colors = TextFieldDefaults.textFieldColors(
@@ -623,6 +619,15 @@ fun CredentialElementTextField(
     )
 
 }
+
+/* Not working cause of permissions
+@Preview(showBackground = true)
+@Composable
+fun NotesAndPasswordsDetailStatelessPreview() {
+    NotesAndPasswordsTheme {
+        NotesAndPasswordsDetailStateless(nap = getPreviewNap())
+    }
+}*/
 
 enum class NotesAndPasswordsCurrentList {
     Notes, Passwords
