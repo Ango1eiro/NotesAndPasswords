@@ -26,13 +26,14 @@ import androidx.compose.ui.graphics.painter.Painter
 import androidx.compose.ui.layout.ContentScale
 import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.res.painterResource
+import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.text.style.TextAlign
 import androidx.compose.ui.tooling.preview.Preview
 import androidx.compose.ui.unit.dp
 import com.myfirstcompose.notesandpasswords.NotesAndPasswordsViewModel
 import com.myfirstcompose.notesandpasswords.R
 import com.myfirstcompose.notesandpasswords.data.SimpleNap
-import com.myfirstcompose.notesandpasswords.getSimpleNapList
+import com.myfirstcompose.notesandpasswords.utils.getSimpleNapList
 import com.myfirstcompose.notesandpasswords.ui.theme.NotesAndPasswordsTheme
 import kotlinx.coroutines.launch
 
@@ -223,7 +224,7 @@ fun AlertDialogBeforeDelete(
                 showDialog.value = false
             },
             title = {
-                Text(text = "Delete item?")
+                Text(text = stringResource(R.string.question_delete_item))
             },
             confirmButton = {
                 Button(
@@ -231,7 +232,7 @@ fun AlertDialogBeforeDelete(
                         onYes()
                         showDialog.value = false
                     }) {
-                    Text(text = "Yes")
+                    Text(text = stringResource(R.string.answer_yes))
                 }
             },
             dismissButton = {
@@ -241,7 +242,7 @@ fun AlertDialogBeforeDelete(
                         showDialog.value = false
                     })
                 {
-                    Text("No")
+                    Text(stringResource(R.string.answer_no))
                 }
             }
         )
@@ -254,7 +255,7 @@ fun AlertDialogBeforeDelete(
 fun NotesAndPasswordsListPreview() {
     NotesAndPasswordsTheme {
         NotesAndPasswordsList(
-            list = getSimpleNapList()
+            list = getSimpleNapList(LocalContext.current.applicationContext)
         )
     }
 }

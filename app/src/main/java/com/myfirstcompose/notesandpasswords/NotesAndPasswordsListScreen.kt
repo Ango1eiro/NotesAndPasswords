@@ -1,8 +1,6 @@
 package com.myfirstcompose.notesandpasswords
 
-enum class NotesAndPasswordsListScreen(
-
-) {
+enum class NotesAndPasswordsListScreen {
     Main, Detail;
 
     companion object {

@@ -4,6 +4,7 @@ import android.content.Context
 import androidx.room.Database
 import androidx.room.Room
 import androidx.room.RoomDatabase
+import com.myfirstcompose.notesandpasswords.R
 
 @Database(entities = [DataBaseNap::class,DataBaseNote::class,DataBaseCredential::class], version = 2)
 abstract class AppDatabase : RoomDatabase() {
@@ -22,7 +23,7 @@ abstract class AppDatabase : RoomDatabase() {
                     instance = Room.databaseBuilder(
                         context.applicationContext,
                         AppDatabase::class.java,
-                        "notes_and_passwords_database"
+                        context.getString(R.string.database_name)
                     ).build()
 
                     INSTANCE = instance

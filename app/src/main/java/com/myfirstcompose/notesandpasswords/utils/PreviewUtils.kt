@@ -1,10 +1,7 @@
-package com.myfirstcompose.notesandpasswords
+package com.myfirstcompose.notesandpasswords.utils
 
-import androidx.compose.runtime.MutableState
-import androidx.compose.runtime.mutableStateOf
-import com.myfirstcompose.notesandpasswords.data.Credential
-import com.myfirstcompose.notesandpasswords.data.Nap
-import com.myfirstcompose.notesandpasswords.data.Note
+import android.content.Context
+import com.myfirstcompose.notesandpasswords.R
 import com.myfirstcompose.notesandpasswords.data.SimpleNap
 
 fun getImageIdByNumber(number:Long) : Int {
@@ -17,10 +14,10 @@ fun getImageIdByNumber(number:Long) : Int {
     }
 }
 
-fun getSimpleNapList() = List(20) { i ->
+fun getSimpleNapList(applicationContext: Context) = List(20) { i ->
     SimpleNap(
         id = i.toLong(),
-        title = "NAP beautiful title #$i",
+        title = applicationContext.getString(R.string.text_title_preview,i),
         image = "")
 }
 

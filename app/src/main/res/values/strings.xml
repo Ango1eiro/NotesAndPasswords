@@ -1,3 +1,14 @@
 <resources>
-    <string name="app_name">Notes &amp; Passwords</string>
+    <string name="app_name" translatable="false">Notes &amp; Passwords</string>
+    <string name="database_name" translatable="false">notes_and_passwords_database</string>
+    <string name="question_delete_item">Delete item?</string>
+    <string name="answer_yes">Yes</string>
+    <string name="answer_no">No</string>
+    <string name="text_title">Title</string>
+    <string name="text_notes">Notes</string>
+    <string name="text_passwords">Passwords</string>
+    <string name="explanation_permission_denied">The external storage is important for this app. Please grant the permission.</string>
+    <string name="explanation_permission_not_granted">Storage permission required for this feature to be available.</string>
+    <string name="text_content">Content</string>
+    <string name="text_title_preview">Preview title №%1$d</string>
 </resources>

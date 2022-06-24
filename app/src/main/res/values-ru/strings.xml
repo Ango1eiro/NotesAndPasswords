@@ -1,0 +1,13 @@
+<?xml version="1.0" encoding="utf-8"?>
+<resources>
+    <string name="question_delete_item">Вы уверены что хотите удалить?</string>
+    <string name="answer_yes">Да</string>
+    <string name="answer_no">Нет</string>
+    <string name="text_title">Заголовок</string>
+    <string name="text_passwords">Пароли</string>
+    <string name="explanation_permission_denied">Для корректной работы необходим доступ к хранилищу</string>
+    <string name="explanation_permission_not_granted">Для корректной работы необходим доступ к хранилищу</string>
+    <string name="text_content">Содержание</string>
+    <string name="text_notes">Записки</string>
+    <string name="text_title_preview">Тестовый заголовок №%1$d</string>
+</resources>

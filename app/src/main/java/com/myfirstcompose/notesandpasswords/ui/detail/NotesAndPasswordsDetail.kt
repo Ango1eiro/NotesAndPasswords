@@ -39,6 +39,7 @@ import androidx.compose.ui.input.pointer.pointerInput
 import androidx.compose.ui.layout.ContentScale
 import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.res.painterResource
+import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.text.input.KeyboardCapitalization
 import androidx.compose.ui.text.style.TextAlign
 import androidx.compose.ui.unit.dp
@@ -283,7 +284,7 @@ fun NotesAndPasswordsDetailTop(
                 },
                 label = {
                     Text(
-                        text = "Title",
+                        text = stringResource(R.string.text_title),
                         textAlign = TextAlign.Center,
                     )
                 },
@@ -298,9 +299,9 @@ fun NotesAndPasswordsDetailTop(
             )
             Spacer(modifier = Modifier.height(12.dp))
             if (currentList == NotesAndPasswordsCurrentList.Notes) {
-                CurrentListTopText(text = "Notes")
+                CurrentListTopText(text = stringResource(R.string.text_notes))
             } else {
-                CurrentListTopText(text = "Passwords")
+                CurrentListTopText(text = stringResource(R.string.text_passwords))
             }
         }
     }
@@ -342,13 +343,12 @@ fun TopImageWithPermission(
                 if ((storagePermissionState.status as PermissionStatus.Denied).shouldShowRationale) {
                     // If the user has denied the permission but the rationale can be shown,
                     // then gently explain why the app requires this permission
-                    "The external storage is important for this app. Please grant the permission."
+                    stringResource(R.string.explanation_permission_denied)
                 } else {
                     // If it's the first time the user lands on this feature, or the user
                     // doesn't want to be asked again for this permission, explain that the
                     // permission is required
-                    "Storage permission required for this feature to be available. " +
-                            "Please grant the permission"
+                    stringResource(R.string.explanation_permission_not_granted)
                 }
             Toast.makeText(LocalContext.current, textToShow, Toast.LENGTH_SHORT).show()
             onImageClick = { storagePermissionState.launchPermissionRequest() }
@@ -470,14 +470,14 @@ fun NoteElement(note: Note) {
                 ) {
                     NoteElementTextField(
                         stateValue = note.title.value,
-                        labelText = "Title",
+                        labelText = stringResource(R.string.text_title),
                         onValueChange = {
                             note.title.value = it
                         }
                     )
                     NoteElementTextField(
                         stateValue = note.content.value,
-                        labelText = "Content",
+                        labelText = stringResource(R.string.text_content),
                         onValueChange = {
                             note.content.value = it
                         }
@@ -563,7 +563,7 @@ fun CredentialElement(credential: Credential) {
                 ) {
                     CredentialElementTextField(
                         stateValue = credential.title.value,
-                        labelText = "Title",
+                        labelText = stringResource(id = R.string.text_title),
                         onValueChange = {
                             credential.title.value = it
                         },
