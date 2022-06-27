@@ -10,4 +10,7 @@
     <string name="text_content">Содержание</string>
     <string name="text_notes">Записки</string>
     <string name="text_title_preview">Тестовый заголовок №%1$d</string>
+    <string name="text_login">Логин</string>
+    <string name="text_password">Пароль</string>
+    <string name="text_collapse">Свернуть</string>
 </resources>

@@ -11,4 +11,7 @@
     <string name="explanation_permission_not_granted">Storage permission required for this feature to be available.</string>
     <string name="text_content">Content</string>
     <string name="text_title_preview">Preview title №%1$d</string>
+    <string name="text_login">Login</string>
+    <string name="text_password">Password</string>
+    <string name="text_collapse">Collapse</string>
 </resources>

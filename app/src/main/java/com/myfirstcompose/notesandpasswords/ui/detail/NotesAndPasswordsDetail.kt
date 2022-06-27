@@ -10,6 +10,11 @@ import android.util.Log
 import android.widget.Toast
 import androidx.activity.compose.rememberLauncherForActivityResult
 import androidx.activity.result.contract.ActivityResultContracts
+import androidx.compose.animation.Crossfade
+import androidx.compose.animation.ExperimentalAnimationApi
+import androidx.compose.animation.core.snap
+import androidx.compose.animation.core.spring
+import androidx.compose.animation.core.tween
 import androidx.compose.foundation.Image
 import androidx.compose.foundation.background
 import androidx.compose.foundation.border
@@ -26,22 +31,26 @@ import androidx.compose.material.icons.filled.Add
 import androidx.compose.material.icons.filled.Check
 import androidx.compose.runtime.*
 import androidx.compose.runtime.saveable.rememberSaveable
+import androidx.compose.runtime.snapshots.MutableSnapshot
+import androidx.compose.runtime.snapshots.SnapshotStateList
 import androidx.compose.ui.Alignment
+import androidx.compose.ui.Alignment.Companion.CenterHorizontally
 import androidx.compose.ui.Alignment.Companion.CenterVertically
-import androidx.compose.ui.Alignment.Companion.TopEnd
+import androidx.compose.ui.Alignment.Companion.TopCenter
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.clip
-import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.graphics.ColorFilter
 import androidx.compose.ui.graphics.asImageBitmap
 import androidx.compose.ui.graphics.painter.BitmapPainter
 import androidx.compose.ui.input.pointer.pointerInput
 import androidx.compose.ui.layout.ContentScale
 import androidx.compose.ui.platform.LocalContext
+import androidx.compose.ui.platform.LocalInspectionMode
 import androidx.compose.ui.res.painterResource
 import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.text.input.KeyboardCapitalization
 import androidx.compose.ui.text.style.TextAlign
+import androidx.compose.ui.tooling.preview.Preview
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 import com.google.accompanist.permissions.ExperimentalPermissionsApi
@@ -52,8 +61,11 @@ import com.myfirstcompose.notesandpasswords.R
 import com.myfirstcompose.notesandpasswords.data.Credential
 import com.myfirstcompose.notesandpasswords.data.Nap
 import com.myfirstcompose.notesandpasswords.data.Note
+import com.myfirstcompose.notesandpasswords.ui.theme.NotesAndPasswordsTheme
 import com.myfirstcompose.notesandpasswords.ui.theme.PinkSuperLight
 import com.myfirstcompose.notesandpasswords.utils.createCopyAndReturnRealPath
+import com.myfirstcompose.notesandpasswords.utils.getPreviewNap
+import com.myfirstcompose.notesandpasswords.utils.getSimpleNapList
 import kotlinx.coroutines.launch
 
 @Composable
@@ -66,27 +78,6 @@ fun NotesAndPasswordsDetail(
     val scope = rememberCoroutineScope()
 
     Log.v("NotesAndPasswordsDetail", "$currentRecomposeScope id - $id")
-
-//    var initialised by remember {
-//        mutableStateOf(false)
-//    }
-
-//    Log.v("NotesAndPasswordsDetail","initialised - $initialised")
-//    if(!initialised) {
-//        if (id < 0) {
-//            viewModel.newCurrentNap()
-//            initialised = true
-//        } else {
-//            LaunchedEffect(key1 = id, block = {
-//                viewModel.setCurrentNap(id)
-//                initialised = true
-//            })
-//
-//        }
-//    }
-//    Log.v("NotesAndPasswordsDetail","initialised - $initialised")
-//
-//    val nap by viewModel.currentNap.observeAsState()
 
     var nap by remember { mutableStateOf<Nap?>(null) }
     LaunchedEffect(key1 = id) {
@@ -212,6 +203,7 @@ fun NotesAndPasswordsDetailStateless(
 }
 
 
+@OptIn(ExperimentalAnimationApi::class)
 @Composable
 fun NotesAndPasswordsDetailTop(
     currentList: NotesAndPasswordsCurrentList,
@@ -277,7 +269,6 @@ fun NotesAndPasswordsDetailTop(
         ) {
             Spacer(modifier = Modifier.height(60.dp))
             OutlinedTextField(
-//                value = napTitle.value,
                 value = nap.title.value,
                 onValueChange = {
                     onTitleChange(it)
@@ -293,15 +284,27 @@ fun NotesAndPasswordsDetailTop(
                     unfocusedBorderColor = MaterialTheme.colors.secondary,
                     unfocusedLabelColor = MaterialTheme.colors.secondary),
                 modifier = Modifier
-//                    .fillMaxSize()
                     .wrapContentHeight(CenterVertically)
                     .padding(start = 8.dp),
             )
             Spacer(modifier = Modifier.height(12.dp))
-            if (currentList == NotesAndPasswordsCurrentList.Notes) {
-                CurrentListTopText(text = stringResource(R.string.text_notes))
-            } else {
-                CurrentListTopText(text = stringResource(R.string.text_passwords))
+//            if (currentList == NotesAndPasswordsCurrentList.Notes) {
+//                CurrentListTopText(text = stringResource(R.string.text_notes))
+//            } else {
+//                CurrentListTopText(text = stringResource(R.string.text_passwords))
+//            }
+////            AnimatedContent(currentList){
+//                when(it){
+//                    NotesAndPasswordsCurrentList.Notes -> CurrentListTopText(text = stringResource(R.string.text_notes))
+//                    NotesAndPasswordsCurrentList.Passwords -> CurrentListTopText(text = stringResource(R.string.text_passwords))
+//                }
+//            }
+            Crossfade(targetState = currentList, animationSpec = spring(), modifier = Modifier.wrapContentSize()) {
+                if (it == NotesAndPasswordsCurrentList.Notes) {
+                    CurrentListTopText(text = stringResource(R.string.text_notes))
+                } else {
+                    CurrentListTopText(text = stringResource(R.string.text_passwords))
+                }
             }
         }
     }
@@ -314,7 +317,8 @@ fun CurrentListTopText(text: String) {
         fontSize = 36.sp,
         color = MaterialTheme.colors.secondary,
         modifier = Modifier
-            .padding(start = 8.dp),
+            .padding(start = 8.dp)
+            .fillMaxSize(),
         textAlign = TextAlign.Center
     )
 }
@@ -326,33 +330,37 @@ fun TopImageWithPermission(
     onImageWithPermissionClick: () -> Unit,
 ) {
 
-    val storagePermissionState = rememberPermissionState(
-        Manifest.permission.READ_EXTERNAL_STORAGE
-    )
-
     var onImageClick = {}
 
-    when (storagePermissionState.status) {
-        // If the camera permission is granted, then show screen with the feature enabled
-        PermissionStatus.Granted -> {
-            onImageClick = onImageWithPermissionClick // Pick image
-        }
-        is PermissionStatus.Denied -> {
+    // Execute when not in Preview mode
+    if(!LocalInspectionMode.current) {
 
-            val textToShow =
-                if ((storagePermissionState.status as PermissionStatus.Denied).shouldShowRationale) {
-                    // If the user has denied the permission but the rationale can be shown,
-                    // then gently explain why the app requires this permission
-                    stringResource(R.string.explanation_permission_denied)
-                } else {
-                    // If it's the first time the user lands on this feature, or the user
-                    // doesn't want to be asked again for this permission, explain that the
-                    // permission is required
-                    stringResource(R.string.explanation_permission_not_granted)
-                }
-            Toast.makeText(LocalContext.current, textToShow, Toast.LENGTH_SHORT).show()
-            onImageClick = { storagePermissionState.launchPermissionRequest() }
+        val storagePermissionState = rememberPermissionState(
+            Manifest.permission.READ_EXTERNAL_STORAGE
+        )
 
+        when (storagePermissionState.status) {
+            // If the camera permission is granted, then show screen with the feature enabled
+            PermissionStatus.Granted -> {
+                onImageClick = onImageWithPermissionClick // Pick image
+            }
+            is PermissionStatus.Denied -> {
+
+                val textToShow =
+                    if ((storagePermissionState.status as PermissionStatus.Denied).shouldShowRationale) {
+                        // If the user has denied the permission but the rationale can be shown,
+                        // then gently explain why the app requires this permission
+                        stringResource(R.string.explanation_permission_denied)
+                    } else {
+                        // If it's the first time the user lands on this feature, or the user
+                        // doesn't want to be asked again for this permission, explain that the
+                        // permission is required
+                        stringResource(R.string.explanation_permission_not_granted)
+                    }
+                Toast.makeText(LocalContext.current, textToShow, Toast.LENGTH_SHORT).show()
+                onImageClick = { storagePermissionState.launchPermissionRequest() }
+
+            }
         }
     }
 
@@ -415,9 +423,15 @@ fun NotesAndPasswordsDetailBottom(
             }
 
     ) {
-        when (currentList) {
-            NotesAndPasswordsCurrentList.Notes -> NotesList(notes = nap.notes)
-            NotesAndPasswordsCurrentList.Passwords -> PasswordsList(credentials = nap.credentials)
+//        when (currentList) {
+//            NotesAndPasswordsCurrentList.Notes -> NotesList(notes = nap.notes)
+//            NotesAndPasswordsCurrentList.Passwords -> PasswordsList(credentials = nap.credentials)
+//        }
+        Crossfade(targetState = currentList, animationSpec = spring()) {
+            when (it) {
+                NotesAndPasswordsCurrentList.Notes -> NotesList(notes = nap.notes)
+                NotesAndPasswordsCurrentList.Passwords -> PasswordsList(credentials = nap.credentials)
+            }
         }
     }
 }
@@ -483,14 +497,27 @@ fun NoteElement(note: Note) {
                         }
                     )
                 }
-                Image(
-                    painter = painterResource(id = R.drawable.close_fullscreen_48px),
-                    contentDescription = null,
+                Button(
+                    onClick = { expandedState = !expandedState },
+                    contentPadding = PaddingValues( top = 6.dp),
+                    shape = RoundedCornerShape(0.dp,0.dp,16.dp,16.dp),
                     modifier = Modifier
-                        .align(TopEnd)
-                        .size(24.dp)
-                        .padding(4.dp)
-                        .clickable { expandedState = !expandedState })
+                        .align(TopCenter)
+                        .offset(y = (-8).dp)
+                        .height(26.dp)
+//                        .clip(RoundedCornerShape(15.dp, 15.dp, 0.dp, 0.dp))
+                ) {
+                    Text(text = stringResource(R.string.text_collapse))
+                }
+//                Image(
+//                    painter = painterResource(id = R.drawable.close_fullscreen_48px),
+//                    contentDescription = null,
+//                    colorFilter = ColorFilter.tint(color = MaterialTheme.colors.primary),
+//                    modifier = Modifier
+//                        .align(TopEnd)
+//                        .size(24.dp)
+//                        .padding(4.dp)
+//                        .clickable { expandedState = !expandedState })
             }
         }
     }
@@ -509,7 +536,7 @@ fun NoteElementTextField(
         onValueChange = onValueChange,
         keyboardOptions = KeyboardOptions(capitalization = KeyboardCapitalization.Sentences),
         colors = TextFieldDefaults.textFieldColors(
-            backgroundColor = Color.White,
+            backgroundColor = MaterialTheme.colors.background,
             unfocusedIndicatorColor = MaterialTheme.colors.secondary,
             unfocusedLabelColor = MaterialTheme.colors.secondary),
         modifier = Modifier
@@ -571,27 +598,39 @@ fun CredentialElement(credential: Credential) {
                     )
                     CredentialElementTextField(
                         stateValue = credential.login.value,
-                        labelText = "Login",
+                        labelText = stringResource(R.string.text_login),
                         onValueChange = {
                             credential.login.value = it
                         }
                     )
                     CredentialElementTextField(
                         stateValue = credential.password.value,
-                        labelText = "Password",
+                        labelText = stringResource(R.string.text_password),
                         onValueChange = {
                             credential.password.value = it
                         }
                     )
                 }
-                Image(
-                    painter = painterResource(id = R.drawable.close_fullscreen_48px),
-                    contentDescription = null,
+                Button(
+                    onClick = { expandedState = !expandedState },
+                    contentPadding = PaddingValues( top = 6.dp),
+                    shape = RoundedCornerShape(0.dp,0.dp,16.dp,16.dp),
                     modifier = Modifier
-                        .align(TopEnd)
-                        .size(24.dp)
-                        .padding(4.dp)
-                        .clickable { expandedState = !expandedState })
+                        .align(TopCenter)
+                        .offset(y = (-8).dp)
+                        .height(26.dp)
+//                        .clip(RoundedCornerShape(15.dp, 15.dp, 0.dp, 0.dp))
+                ) {
+                    Text(text = stringResource(R.string.text_collapse))
+                }
+//                Image(
+//                    painter = painterResource(id = R.drawable.close_fullscreen_48px),
+//                    contentDescription = null,
+//                    modifier = Modifier
+//                        .align(TopEnd)
+//                        .size(24.dp)
+//                        .padding(4.dp)
+//                        .clickable { expandedState = !expandedState })
             }
         }
     }
@@ -611,7 +650,7 @@ fun CredentialElementTextField(
         onValueChange = onValueChange,
         keyboardOptions = keyboardOptions,
         colors = TextFieldDefaults.textFieldColors(
-            backgroundColor = Color.White,
+            backgroundColor = MaterialTheme.colors.background,
             unfocusedIndicatorColor = MaterialTheme.colors.secondary,
             unfocusedLabelColor = MaterialTheme.colors.secondary),
         modifier = Modifier
@@ -620,12 +659,22 @@ fun CredentialElementTextField(
 
 }
 
-/* Not working cause of permissions
 @Preview(showBackground = true)
 @Composable
 fun NotesAndPasswordsDetailStatelessPreview() {
     NotesAndPasswordsTheme {
-        NotesAndPasswordsDetailStateless(nap = getPreviewNap())
+        NotesAndPasswordsDetailStateless(
+            nap = getPreviewNap()
+        )
+    }
+}
+
+/* Not working as expected
+@Preview(showBackground = true)
+@Composable
+fun NotesAndPasswordsDetailStatelessPreview() {
+    NotesAndPasswordsTheme {
+        CredentialElement(credential = Credential())
     }
 }*/
 

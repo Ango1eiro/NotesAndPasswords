@@ -31,3 +31,7 @@ data class Credential (
     var login: MutableState<String> = mutableStateOf(""),
     var password: MutableState<String> = mutableStateOf("")
 )
+
+enum class NotesAndPasswordsFolder {
+    Work, Personal
+}

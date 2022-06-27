@@ -9,9 +9,9 @@ import androidx.compose.ui.graphics.Color
 import com.google.accompanist.systemuicontroller.rememberSystemUiController
 
 private val DarkColorPalette = darkColors(
-    primary = Purple200,
-    primaryVariant = Purple700,
-    secondary = Teal200
+    primary = PinkLight,
+    primaryVariant = PinkHeavy,
+    secondary = PinkLight
 )
 
 private val LightColorPalette = lightColors(
@@ -46,7 +46,7 @@ fun NotesAndPasswordsTheme(
     val systemUiController = rememberSystemUiController()
     if(darkTheme){
         systemUiController.setSystemBarsColor(
-            color = Color.Transparent
+            color = Color.Black
         )
     }else{
         systemUiController.setSystemBarsColor(
