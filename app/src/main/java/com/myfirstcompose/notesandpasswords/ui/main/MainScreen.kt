@@ -5,37 +5,55 @@ import android.graphics.ImageDecoder
 import android.net.Uri
 import android.os.Build
 import android.provider.MediaStore
+import android.util.Log
 import android.widget.Toast
+import androidx.compose.animation.core.*
 import androidx.compose.foundation.Image
 import androidx.compose.foundation.clickable
 import androidx.compose.foundation.layout.*
 import androidx.compose.foundation.lazy.LazyColumn
 import androidx.compose.foundation.lazy.items
+import androidx.compose.foundation.shape.RoundedCornerShape
+import androidx.compose.foundation.text.KeyboardActionScope
+import androidx.compose.foundation.text.KeyboardActions
+import androidx.compose.foundation.text.KeyboardOptions
 import androidx.compose.material.*
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.filled.Add
+import androidx.compose.material.icons.filled.ArrowForward
+import androidx.compose.material.icons.filled.Search
 import androidx.compose.runtime.*
 import androidx.compose.runtime.livedata.observeAsState
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Alignment.Companion.BottomEnd
 import androidx.compose.ui.Modifier
+import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.graphics.ColorFilter
 import androidx.compose.ui.graphics.asImageBitmap
 import androidx.compose.ui.graphics.painter.BitmapPainter
 import androidx.compose.ui.graphics.painter.Painter
 import androidx.compose.ui.layout.ContentScale
+import androidx.compose.ui.platform.LocalConfiguration
 import androidx.compose.ui.platform.LocalContext
+import androidx.compose.ui.platform.LocalFocusManager
 import androidx.compose.ui.res.painterResource
 import androidx.compose.ui.res.stringResource
+import androidx.compose.ui.text.input.ImeAction
+import androidx.compose.ui.text.input.KeyboardType
 import androidx.compose.ui.text.style.TextAlign
 import androidx.compose.ui.tooling.preview.Preview
+import androidx.compose.ui.unit.Dp
+import androidx.compose.ui.unit.IntOffset
 import androidx.compose.ui.unit.dp
 import com.myfirstcompose.notesandpasswords.NotesAndPasswordsViewModel
 import com.myfirstcompose.notesandpasswords.R
 import com.myfirstcompose.notesandpasswords.data.SimpleNap
-import com.myfirstcompose.notesandpasswords.utils.getSimpleNapList
 import com.myfirstcompose.notesandpasswords.ui.theme.NotesAndPasswordsTheme
+import com.myfirstcompose.notesandpasswords.ui.theme.PinkHeavy
+import com.myfirstcompose.notesandpasswords.ui.theme.PinkSuperLight
+import com.myfirstcompose.notesandpasswords.utils.getSimpleNapList
 import kotlinx.coroutines.launch
+import kotlin.math.roundToInt
 
 @Composable
 fun MainBody(
@@ -45,15 +63,185 @@ fun MainBody(
     viewModel: NotesAndPasswordsViewModel,
 ) {
 
+    val configuration = LocalConfiguration.current
+    val focusManager = LocalFocusManager.current
+    val coroutineScope = rememberCoroutineScope()
+
     val list by viewModel.allNaps.observeAsState(listOf())
     if (viewModel.currentNap.value != null) {
         viewModel.resetCurrentNap()
     }
-    NotesAndPasswordsList(list = list,
-        onListElementClick = onListElementClick,
-        onListElementDismiss = onListElementDismiss,
-        onFabClick = onFabClick)
 
+    val screenDensity = configuration.densityDpi / 160f
+    val baseOffsetValue = configuration.screenWidthDp.toFloat() * screenDensity
+    val offsetValueWithIcon = baseOffsetValue - 150F
+
+    var searchText by remember { mutableStateOf("") }
+    var searchEnabled by remember { mutableStateOf(false) }
+//    val searchOffset  =  remember { Animatable(offsetValueWithIcon) }
+//    Log.v("MainBody", "$currentRecomposeScope - searchOffset - ${searchOffset.value}")
+
+    var spacerHeightState by remember { mutableStateOf(0.dp) }
+
+//    val spacerHeight: Dp by animateDpAsState(
+//        targetValue = spacerHeightState,
+//        tween(
+//            delayMillis = 0,
+//            durationMillis = 2000,
+//            easing = LinearOutSlowInEasing
+//        )
+//    )
+    Log.v("MainBody", "$currentRecomposeScope - spacerHeightState - $spacerHeightState")
+//    Log.v("MainBody", "$currentRecomposeScope - spacerHeight - $spacerHeight")
+
+    val invertSearchState: () -> Unit = {
+        searchEnabled = !searchEnabled
+        spacerHeightState = if (searchEnabled) {
+            56.dp
+        } else {
+            0.dp
+        }
+    }
+
+
+
+
+    val onSearch: KeyboardActionScope.() -> Unit = {
+        focusManager.clearFocus()
+    }
+
+    Box(){
+        Column(
+            modifier = Modifier,
+            horizontalAlignment = Alignment.CenterHorizontally
+        ) {
+            AnimatableSpacer(spacerHeightState)
+            NotesAndPasswordsList(list = list,
+                onListElementClick = onListElementClick,
+                onListElementDismiss = onListElementDismiss,
+                onFabClick = onFabClick)
+        }
+        SearchView(
+            value = searchText,
+//            searchOffset = searchOffset,
+            searchEnabled = searchEnabled,
+            onValueChange = {
+                searchText = it
+                viewModel.setSearchText(searchText)
+            },
+            onSearch = onSearch,
+            screenDensity = screenDensity,
+            baseOffsetValue = baseOffsetValue,
+            offsetValueWithIcon = offsetValueWithIcon,
+            invertSearchState = invertSearchState
+//            onLeadingIconClick = onLeadingIconClick,
+//            onTrailingIconClick = onTrailingIconClick
+        )
+    }
+
+
+}
+
+@Composable
+fun AnimatableSpacer(spacerHeightState : Dp){
+    val spacerHeight: Dp by animateDpAsState(
+        targetValue = spacerHeightState,
+        tween(
+            delayMillis = 0,
+            durationMillis = 2000,
+            easing = LinearOutSlowInEasing
+        )
+    )
+    Spacer(modifier = Modifier.height(spacerHeight))
+}
+
+@Composable
+fun SearchView(
+    value: String,
+//    searchOffset: Animatable<Float, AnimationVector1D>,
+    searchEnabled: Boolean,
+    onValueChange: (String) -> Unit = {},
+    onSearch: KeyboardActionScope.() -> Unit = {},
+    onLeadingIconClick: () -> Unit = {},
+    onTrailingIconClick: () -> Unit = {},
+    invertSearchState: () -> Unit = {},
+    screenDensity: Float,
+    baseOffsetValue: Float,
+    offsetValueWithIcon: Float) {
+
+    val coroutineScope = rememberCoroutineScope()
+    val searchOffset  =  remember { Animatable(offsetValueWithIcon) }
+
+    val onLeadingIconClick: () -> Unit = {
+        invertSearchState()
+        coroutineScope.launch {
+            searchOffset.animateTo(
+                targetValue = (baseOffsetValue/2 - searchViewWidth.value* screenDensity/2),
+                animationSpec = tween(
+                    durationMillis = 2000,
+                    delayMillis = 0
+                )
+            )
+        }
+    }
+
+    val onTrailingIconClick: () -> Unit = {
+        invertSearchState()
+        coroutineScope.launch {
+            searchOffset.animateTo(
+                targetValue = offsetValueWithIcon,
+                animationSpec = tween(
+                    durationMillis = 3000,
+                    delayMillis = 0
+                )
+            )
+        }
+    }
+
+    Surface(
+        modifier = Modifier
+            .padding(top = 8.dp)
+            .height(48.dp)
+            .width(searchViewWidth)
+            .offset {
+                IntOffset(x = searchOffset.value.roundToInt(), y = 0)
+            },
+        shape = RoundedCornerShape(24.dp)
+
+    ) {
+        TextField(
+            value = value,
+            onValueChange = onValueChange,
+            readOnly = !searchEnabled,
+            leadingIcon = {
+                Icon(
+                    imageVector = Icons.Filled.Search,
+                    contentDescription = null,
+                    tint = PinkHeavy,
+                    modifier = Modifier.clickable { onLeadingIconClick() })
+            },
+            trailingIcon = {
+                Icon(
+                    imageVector = Icons.Filled.ArrowForward,
+                    contentDescription = null,
+                    tint = PinkHeavy,
+                    modifier = Modifier.clickable { onTrailingIconClick() })
+            },
+            keyboardOptions = KeyboardOptions(
+                keyboardType = KeyboardType.Text,
+                imeAction = ImeAction.Search
+            ),
+            keyboardActions = KeyboardActions(onSearch = onSearch),
+            colors = TextFieldDefaults.textFieldColors(
+                backgroundColor = PinkSuperLight,
+                disabledTextColor = Color.Transparent,
+                focusedIndicatorColor = Color.Transparent,
+                unfocusedIndicatorColor = Color.Transparent,
+                disabledIndicatorColor = Color.Transparent
+            )
+
+        )
+    }
 }
 
 @OptIn(ExperimentalMaterialApi::class)
@@ -275,6 +463,8 @@ fun AlertDialogBeforeDeletePreview() {
         AlertDialogBeforeDelete()
     }
 }
+
+val searchViewWidth = 256.dp
 
 
 

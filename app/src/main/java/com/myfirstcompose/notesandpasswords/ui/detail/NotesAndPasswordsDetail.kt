@@ -299,7 +299,7 @@ fun NotesAndPasswordsDetailTop(
 //                    NotesAndPasswordsCurrentList.Passwords -> CurrentListTopText(text = stringResource(R.string.text_passwords))
 //                }
 //            }
-            Crossfade(targetState = currentList, animationSpec = spring(), modifier = Modifier.wrapContentSize()) {
+            Crossfade(targetState = currentList, animationSpec = spring(stiffness = 10.0F), modifier = Modifier.wrapContentSize()) {
                 if (it == NotesAndPasswordsCurrentList.Notes) {
                     CurrentListTopText(text = stringResource(R.string.text_notes))
                 } else {
@@ -423,16 +423,16 @@ fun NotesAndPasswordsDetailBottom(
             }
 
     ) {
-//        when (currentList) {
-//            NotesAndPasswordsCurrentList.Notes -> NotesList(notes = nap.notes)
-//            NotesAndPasswordsCurrentList.Passwords -> PasswordsList(credentials = nap.credentials)
-//        }
-        Crossfade(targetState = currentList, animationSpec = spring()) {
-            when (it) {
-                NotesAndPasswordsCurrentList.Notes -> NotesList(notes = nap.notes)
-                NotesAndPasswordsCurrentList.Passwords -> PasswordsList(credentials = nap.credentials)
-            }
+        when (currentList) {
+            NotesAndPasswordsCurrentList.Notes -> NotesList(notes = nap.notes)
+            NotesAndPasswordsCurrentList.Passwords -> PasswordsList(credentials = nap.credentials)
         }
+//        Crossfade(targetState = currentList, animationSpec = spring()) {
+//            when (it) {
+//                NotesAndPasswordsCurrentList.Notes -> NotesList(notes = nap.notes)
+//                NotesAndPasswordsCurrentList.Passwords -> PasswordsList(credentials = nap.credentials)
+//            }
+//        }
     }
 }
 

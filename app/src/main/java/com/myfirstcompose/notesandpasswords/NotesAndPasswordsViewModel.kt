@@ -8,6 +8,9 @@ import com.myfirstcompose.notesandpasswords.data.SimpleNap
 import com.myfirstcompose.notesandpasswords.room.AppDatabase
 import com.myfirstcompose.notesandpasswords.room.DataBaseNap
 import kotlinx.coroutines.Dispatchers
+import kotlinx.coroutines.flow.Flow
+import kotlinx.coroutines.flow.combine
+import kotlinx.coroutines.flow.flowOf
 import kotlinx.coroutines.launch
 import kotlinx.coroutines.withContext
 
@@ -18,16 +21,24 @@ class NotesAndPasswordsViewModel(application: Application) : ViewModel() {
     val allNaps: LiveData<List<SimpleNap>>
     private val repository: NapRepository
 
-    private val _currentNap = MutableLiveData<Nap>()
-    val currentNap: LiveData<Nap>
+    private val _currentNap = MutableLiveData<Nap?>()
+    val currentNap: LiveData<Nap?>
         get() = _currentNap
+
+    private val _searchText = MutableLiveData("")
+    val searchText: LiveData<String>
+        get() = _searchText
 
     init {
         val napDb = AppDatabase.getInstance(application)
         val napDao = napDb.notesAndPasswordsDao()
         repository = NapRepository(napDao)
 
-        allDataBaseNaps = repository.allNaps
+//        allDataBaseNaps = repository.allNaps
+        allDataBaseNaps = repository.getAllDatabaseNaps()
+            .combine(_searchText.asFlow()){ mDatabaseNaps, mSearchText ->
+                mDatabaseNaps.filter { it.title.contains(mSearchText,true) }
+            }.asLiveData()
         allNaps = Transformations.map(allDataBaseNaps) { data ->
             data.map {
                 SimpleNap(id = it.id,
@@ -69,13 +80,13 @@ class NotesAndPasswordsViewModel(application: Application) : ViewModel() {
         }
     }
 
-    fun newCurrentNap() {
-        _currentNap.value = Nap()
-    }
-
     fun resetCurrentNap() {
         _currentNap.value = null
         Log.v("VM", "After _currentNap reset")
+    }
+
+    fun setSearchText(newSearchText: String) {
+        _searchText.postValue(newSearchText)
     }
 
 }

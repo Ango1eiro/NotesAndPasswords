@@ -3,6 +3,7 @@ package com.myfirstcompose.notesandpasswords.room
 import androidx.lifecycle.LiveData
 import androidx.room.*
 import com.myfirstcompose.notesandpasswords.data.Nap
+import kotlinx.coroutines.flow.Flow
 
 @Dao
 interface NotesAndPasswordsDao {
@@ -32,7 +33,10 @@ interface NotesAndPasswordsDao {
     fun deleteNap(id: Long)
 
     @Query("SELECT * FROM naps")
-    fun getAllNaps(): LiveData<List<DataBaseNap>>
+    fun getAllNaps(): Flow<List<DataBaseNap>>
+
+    @Query("SELECT * FROM naps WHERE title like :searchText")
+    fun getAllNapsWithSearch(searchText: String): Flow<List<DataBaseNap>>
 
     @Query("SELECT * FROM naps WHERE id = :id")
     fun getFullNap(id: Long) : DataBaseFullNap
