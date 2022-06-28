@@ -91,7 +91,7 @@ fun MainBody(
 //            easing = LinearOutSlowInEasing
 //        )
 //    )
-    Log.v("MainBody", "$currentRecomposeScope - spacerHeightState - $spacerHeightState")
+    Log.v("MainBody", "$currentRecomposeScope - spacerHeightStatee - $spacerHeightState")
 //    Log.v("MainBody", "$currentRecomposeScope - spacerHeight - $spacerHeight")
 
     val invertSearchState: () -> Unit = {
