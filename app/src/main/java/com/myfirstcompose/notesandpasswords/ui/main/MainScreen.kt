@@ -7,9 +7,14 @@ import android.os.Build
 import android.provider.MediaStore
 import android.util.Log
 import android.widget.Toast
-import androidx.compose.animation.core.*
+import androidx.compose.animation.core.Animatable
+import androidx.compose.animation.core.LinearOutSlowInEasing
+import androidx.compose.animation.core.animateDpAsState
+import androidx.compose.animation.core.tween
+import androidx.compose.foundation.ExperimentalFoundationApi
 import androidx.compose.foundation.Image
 import androidx.compose.foundation.clickable
+import androidx.compose.foundation.interaction.MutableInteractionSource
 import androidx.compose.foundation.layout.*
 import androidx.compose.foundation.lazy.LazyColumn
 import androidx.compose.foundation.lazy.items
@@ -104,13 +109,11 @@ fun MainBody(
     }
 
 
-
-
     val onSearch: KeyboardActionScope.() -> Unit = {
         focusManager.clearFocus()
     }
 
-    Box(){
+    Box() {
         Column(
             modifier = Modifier,
             horizontalAlignment = Alignment.CenterHorizontally
@@ -143,11 +146,16 @@ fun MainBody(
 }
 
 @Composable
-fun AnimatableSpacer(spacerHeightState : Dp){
+fun AnimatableSpacer(spacerHeightState: Dp) {
+    val delay = if (spacerHeightState == 0.dp) {
+        1000
+    } else {
+        0
+    }
     val spacerHeight: Dp by animateDpAsState(
         targetValue = spacerHeightState,
         tween(
-            delayMillis = 0,
+            delayMillis = delay,
             durationMillis = 2000,
             easing = LinearOutSlowInEasing
         )
@@ -162,24 +170,23 @@ fun SearchView(
     searchEnabled: Boolean,
     onValueChange: (String) -> Unit = {},
     onSearch: KeyboardActionScope.() -> Unit = {},
-    onLeadingIconClick: () -> Unit = {},
-    onTrailingIconClick: () -> Unit = {},
     invertSearchState: () -> Unit = {},
     screenDensity: Float,
     baseOffsetValue: Float,
-    offsetValueWithIcon: Float) {
+    offsetValueWithIcon: Float,
+) {
 
     val coroutineScope = rememberCoroutineScope()
-    val searchOffset  =  remember { Animatable(offsetValueWithIcon) }
+    val searchOffset = remember { Animatable(offsetValueWithIcon) }
 
     val onLeadingIconClick: () -> Unit = {
         invertSearchState()
         coroutineScope.launch {
             searchOffset.animateTo(
-                targetValue = (baseOffsetValue/2 - searchViewWidth.value* screenDensity/2),
+                targetValue = (baseOffsetValue / 2 - searchViewWidth.value * screenDensity / 2),
                 animationSpec = tween(
                     durationMillis = 2000,
-                    delayMillis = 0
+                    delayMillis = 500
                 )
             )
         }
@@ -218,14 +225,24 @@ fun SearchView(
                     imageVector = Icons.Filled.Search,
                     contentDescription = null,
                     tint = PinkHeavy,
-                    modifier = Modifier.clickable { onLeadingIconClick() })
+                    modifier = Modifier
+                        .clickable(
+                            indication = null,
+                            interactionSource = remember { MutableInteractionSource() },
+                            onClick = onLeadingIconClick)
+                )
             },
             trailingIcon = {
                 Icon(
                     imageVector = Icons.Filled.ArrowForward,
                     contentDescription = null,
                     tint = PinkHeavy,
-                    modifier = Modifier.clickable { onTrailingIconClick() })
+                    modifier = Modifier
+                        .clickable(
+                            indication = null,
+                            interactionSource = remember { MutableInteractionSource() },
+                            onClick = onTrailingIconClick
+                        ))
             },
             keyboardOptions = KeyboardOptions(
                 keyboardType = KeyboardType.Text,
@@ -239,12 +256,11 @@ fun SearchView(
                 unfocusedIndicatorColor = Color.Transparent,
                 disabledIndicatorColor = Color.Transparent
             )
-
         )
     }
 }
 
-@OptIn(ExperimentalMaterialApi::class)
+@OptIn(ExperimentalMaterialApi::class, ExperimentalFoundationApi::class)
 @Composable
 fun NotesAndPasswordsList(
     list: List<SimpleNap>,
@@ -258,7 +274,8 @@ fun NotesAndPasswordsList(
         LazyColumn(
             modifier = Modifier
                 .padding(8.dp)
-                .fillMaxSize(),
+                .fillMaxSize()
+            ,
             horizontalAlignment = Alignment.CenterHorizontally
 
         ) {
@@ -269,7 +286,7 @@ fun NotesAndPasswordsList(
                 }
             ) { nap ->
 //                NotesAndPasswordsListItem(nap,onListElementClick)
-                SwipeToDismissElement(nap, onListElementClick, onListElementDismiss)
+                SwipeToDismissElement(nap, onListElementClick, onListElementDismiss, modifier = Modifier.animateItemPlacement())
             }
         }
         FloatingActionButton(
@@ -295,7 +312,9 @@ fun NotesAndPasswordsListItem(
             .fillMaxWidth()
             .padding(4.dp)
             .height(64.dp)
-            .clickable { onListElementClick(nap.id) },
+            .clickable { onListElementClick(nap.id) }
+        ,
+
         elevation = 10.dp
     ) {
         Row(
@@ -360,6 +379,7 @@ fun SwipeToDismissElement(
     nap: SimpleNap,
     onListElementClick: (Long) -> Unit,
     onListElementDismiss: (Long) -> Unit,
+    modifier: Modifier = Modifier
 ) {
 
     val scope = rememberCoroutineScope()
@@ -391,6 +411,7 @@ fun SwipeToDismissElement(
         },
         /*** Set Direction to dismiss */
         directions = setOf(DismissDirection.EndToStart, DismissDirection.StartToEnd),
+        modifier = modifier
     )
 }
 
