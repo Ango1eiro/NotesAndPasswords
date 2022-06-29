@@ -70,7 +70,6 @@ fun MainBody(
 
     val configuration = LocalConfiguration.current
     val focusManager = LocalFocusManager.current
-    val coroutineScope = rememberCoroutineScope()
 
     val list by viewModel.allNaps.observeAsState(listOf())
     if (viewModel.currentNap.value != null) {
@@ -83,30 +82,22 @@ fun MainBody(
 
     var searchText by remember { mutableStateOf("") }
     var searchEnabled by remember { mutableStateOf(false) }
-//    val searchOffset  =  remember { Animatable(offsetValueWithIcon) }
-//    Log.v("MainBody", "$currentRecomposeScope - searchOffset - ${searchOffset.value}")
-
     var spacerHeightState by remember { mutableStateOf(0.dp) }
 
-//    val spacerHeight: Dp by animateDpAsState(
-//        targetValue = spacerHeightState,
-//        tween(
-//            delayMillis = 0,
-//            durationMillis = 2000,
-//            easing = LinearOutSlowInEasing
-//        )
-//    )
     Log.v("MainBody", "$currentRecomposeScope - spacerHeightStatee - $spacerHeightState")
-//    Log.v("MainBody", "$currentRecomposeScope - spacerHeight - $spacerHeight")
 
-    val invertSearchState: () -> Unit = {
-        searchEnabled = !searchEnabled
-        spacerHeightState = if (searchEnabled) {
+    val updateSearchState: (Boolean) -> Unit = {
+        searchEnabled = it
+    }
+
+    val updateHeightState: (Boolean) -> Unit = { expanded ->
+        spacerHeightState = if (expanded) {
             56.dp
         } else {
             0.dp
         }
     }
+
 
 
     val onSearch: KeyboardActionScope.() -> Unit = {
@@ -126,7 +117,6 @@ fun MainBody(
         }
         SearchView(
             value = searchText,
-//            searchOffset = searchOffset,
             searchEnabled = searchEnabled,
             onValueChange = {
                 searchText = it
@@ -136,9 +126,10 @@ fun MainBody(
             screenDensity = screenDensity,
             baseOffsetValue = baseOffsetValue,
             offsetValueWithIcon = offsetValueWithIcon,
-            invertSearchState = invertSearchState
-//            onLeadingIconClick = onLeadingIconClick,
-//            onTrailingIconClick = onTrailingIconClick
+            updateSearchState = updateSearchState,
+            updateHeightState = updateHeightState,
+
+
         )
     }
 
@@ -170,7 +161,8 @@ fun SearchView(
     searchEnabled: Boolean,
     onValueChange: (String) -> Unit = {},
     onSearch: KeyboardActionScope.() -> Unit = {},
-    invertSearchState: () -> Unit = {},
+    updateSearchState: (Boolean) -> Unit = {},
+    updateHeightState: (Boolean) -> Unit = {},
     screenDensity: Float,
     baseOffsetValue: Float,
     offsetValueWithIcon: Float,
@@ -180,20 +172,24 @@ fun SearchView(
     val searchOffset = remember { Animatable(offsetValueWithIcon) }
 
     val onLeadingIconClick: () -> Unit = {
-        invertSearchState()
-        coroutineScope.launch {
-            searchOffset.animateTo(
-                targetValue = (baseOffsetValue / 2 - searchViewWidth.value * screenDensity / 2),
-                animationSpec = tween(
-                    durationMillis = 2000,
-                    delayMillis = 500
+        if (!searchEnabled) {
+            updateHeightState(true)
+            coroutineScope.launch {
+                searchOffset.animateTo(
+                    targetValue = (baseOffsetValue / 2 - searchViewWidth.value * screenDensity / 2),
+                    animationSpec = tween(
+                        durationMillis = 2000,
+                        delayMillis = 500
+                    )
                 )
-            )
+                updateSearchState(true)
+             }
         }
     }
 
     val onTrailingIconClick: () -> Unit = {
-        invertSearchState()
+        updateHeightState(false)
+        updateSearchState(false)
         coroutineScope.launch {
             searchOffset.animateTo(
                 targetValue = offsetValueWithIcon,

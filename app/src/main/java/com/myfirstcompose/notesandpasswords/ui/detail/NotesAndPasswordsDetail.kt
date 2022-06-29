@@ -12,9 +12,7 @@ import androidx.activity.compose.rememberLauncherForActivityResult
 import androidx.activity.result.contract.ActivityResultContracts
 import androidx.compose.animation.Crossfade
 import androidx.compose.animation.ExperimentalAnimationApi
-import androidx.compose.animation.core.snap
 import androidx.compose.animation.core.spring
-import androidx.compose.animation.core.tween
 import androidx.compose.foundation.Image
 import androidx.compose.foundation.background
 import androidx.compose.foundation.border
@@ -31,10 +29,8 @@ import androidx.compose.material.icons.filled.Add
 import androidx.compose.material.icons.filled.Check
 import androidx.compose.runtime.*
 import androidx.compose.runtime.saveable.rememberSaveable
-import androidx.compose.runtime.snapshots.MutableSnapshot
-import androidx.compose.runtime.snapshots.SnapshotStateList
 import androidx.compose.ui.Alignment
-import androidx.compose.ui.Alignment.Companion.CenterHorizontally
+import androidx.compose.ui.Alignment.Companion.Center
 import androidx.compose.ui.Alignment.Companion.CenterVertically
 import androidx.compose.ui.Alignment.Companion.TopCenter
 import androidx.compose.ui.Modifier
@@ -65,7 +61,6 @@ import com.myfirstcompose.notesandpasswords.ui.theme.NotesAndPasswordsTheme
 import com.myfirstcompose.notesandpasswords.ui.theme.PinkSuperLight
 import com.myfirstcompose.notesandpasswords.utils.createCopyAndReturnRealPath
 import com.myfirstcompose.notesandpasswords.utils.getPreviewNap
-import com.myfirstcompose.notesandpasswords.utils.getSimpleNapList
 import kotlinx.coroutines.launch
 
 @Composable
@@ -299,7 +294,9 @@ fun NotesAndPasswordsDetailTop(
 //                    NotesAndPasswordsCurrentList.Passwords -> CurrentListTopText(text = stringResource(R.string.text_passwords))
 //                }
 //            }
-            Crossfade(targetState = currentList, animationSpec = spring(stiffness = 10.0F), modifier = Modifier.wrapContentSize()) {
+            Crossfade(targetState = currentList,
+                animationSpec = spring(stiffness = 10.0F),
+                modifier = Modifier.wrapContentSize()) {
                 if (it == NotesAndPasswordsCurrentList.Notes) {
                     CurrentListTopText(text = stringResource(R.string.text_notes))
                 } else {
@@ -333,7 +330,7 @@ fun TopImageWithPermission(
     var onImageClick = {}
 
     // Execute when not in Preview mode
-    if(!LocalInspectionMode.current) {
+    if (!LocalInspectionMode.current) {
 
         val storagePermissionState = rememberPermissionState(
             Manifest.permission.READ_EXTERNAL_STORAGE
@@ -467,15 +464,22 @@ fun NoteElement(note: Note) {
         modifier = Modifier
             .padding(8.dp)
             .clickable { expandedState = !expandedState }
+
+
     ) {
         if (!expandedState) {
-            Row(
-                horizontalArrangement = Arrangement.SpaceEvenly,
+            Box(
+                contentAlignment = Center,
                 modifier = Modifier
+                    .height(32.dp)
                     .fillMaxSize()
             ) {
-                Text(text = note.title.value)
+                Text(
+                    text = note.title.value,
+
+                    )
             }
+
         } else {
             Box {
                 Column(
@@ -499,8 +503,8 @@ fun NoteElement(note: Note) {
                 }
                 Button(
                     onClick = { expandedState = !expandedState },
-                    contentPadding = PaddingValues( top = 6.dp),
-                    shape = RoundedCornerShape(0.dp,0.dp,16.dp,16.dp),
+                    contentPadding = PaddingValues(top = 6.dp),
+                    shape = RoundedCornerShape(0.dp, 0.dp, 16.dp, 16.dp),
                     modifier = Modifier
                         .align(TopCenter)
                         .offset(y = (-8).dp)
@@ -575,12 +579,16 @@ fun CredentialElement(credential: Credential) {
             .clickable { expandedState = !expandedState }
     ) {
         if (!expandedState) {
-            Row(
-                horizontalArrangement = Arrangement.SpaceEvenly,
+            Box(
+                contentAlignment = Center,
                 modifier = Modifier
-                    .fillMaxSize(),
+                    .height(32.dp)
+                    .fillMaxSize()
             ) {
-                Text(text = credential.title.value)
+                Text(
+                    text = credential.title.value,
+
+                    )
             }
         } else {
             Box {
@@ -613,8 +621,8 @@ fun CredentialElement(credential: Credential) {
                 }
                 Button(
                     onClick = { expandedState = !expandedState },
-                    contentPadding = PaddingValues( top = 6.dp),
-                    shape = RoundedCornerShape(0.dp,0.dp,16.dp,16.dp),
+                    contentPadding = PaddingValues(top = 6.dp),
+                    shape = RoundedCornerShape(0.dp, 0.dp, 16.dp, 16.dp),
                     modifier = Modifier
                         .align(TopCenter)
                         .offset(y = (-8).dp)
