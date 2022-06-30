@@ -5,7 +5,6 @@ import android.graphics.ImageDecoder
 import android.net.Uri
 import android.os.Build
 import android.provider.MediaStore
-import android.util.Log
 import android.widget.Toast
 import androidx.compose.animation.core.Animatable
 import androidx.compose.animation.core.LinearOutSlowInEasing
@@ -68,23 +67,46 @@ fun MainBody(
     viewModel: NotesAndPasswordsViewModel,
 ) {
 
-    val configuration = LocalConfiguration.current
-    val focusManager = LocalFocusManager.current
-
     val list by viewModel.allNaps.observeAsState(listOf())
     if (viewModel.currentNap.value != null) {
         viewModel.resetCurrentNap()
     }
 
+    val updateSearchText: (String) -> Unit = {
+        viewModel.setSearchText(it)
+    }
+
+    MainBodyStateless(
+        list = list,
+        onListElementClick = onListElementClick,
+        onListElementDismiss = onListElementDismiss,
+        onFabClick = onFabClick,
+        updateSearchText = updateSearchText,
+
+    )
+
+}
+
+@Composable
+fun MainBodyStateless(
+    list: List<SimpleNap> = listOf(),
+    onListElementClick: (Long) -> Unit = {},
+    onListElementDismiss: (Long) -> Unit = {},
+    onFabClick: () -> Unit = {},
+    updateSearchText: (String) -> Unit = {}
+){
+
+    val configuration = LocalConfiguration.current
+    val focusManager = LocalFocusManager.current
+
     val screenDensity = configuration.densityDpi / 160f
     val baseOffsetValue = configuration.screenWidthDp.toFloat() * screenDensity
     val offsetValueWithIcon = baseOffsetValue - 150F
+    val targetOffsetValue = (baseOffsetValue / 2 - searchViewWidth.value * screenDensity / 2)
 
     var searchText by remember { mutableStateOf("") }
     var searchEnabled by remember { mutableStateOf(false) }
     var spacerHeightState by remember { mutableStateOf(0.dp) }
-
-    Log.v("MainBody", "$currentRecomposeScope - spacerHeightStatee - $spacerHeightState")
 
     val updateSearchState: (Boolean) -> Unit = {
         searchEnabled = it
@@ -98,13 +120,16 @@ fun MainBody(
         }
     }
 
-
-
     val onSearch: KeyboardActionScope.() -> Unit = {
         focusManager.clearFocus()
     }
 
-    Box() {
+    val onSearchValueChange: (String) -> Unit = {
+        searchText = it
+        updateSearchText(searchText)
+    }
+
+    Box {
         Column(
             modifier = Modifier,
             horizontalAlignment = Alignment.CenterHorizontally
@@ -118,21 +143,14 @@ fun MainBody(
         SearchView(
             value = searchText,
             searchEnabled = searchEnabled,
-            onValueChange = {
-                searchText = it
-                viewModel.setSearchText(searchText)
-            },
+            onValueChange = onSearchValueChange,
             onSearch = onSearch,
-            screenDensity = screenDensity,
-            baseOffsetValue = baseOffsetValue,
+            targetOffsetValue = targetOffsetValue,
             offsetValueWithIcon = offsetValueWithIcon,
             updateSearchState = updateSearchState,
             updateHeightState = updateHeightState,
-
-
-        )
+            )
     }
-
 
 }
 
@@ -157,14 +175,12 @@ fun AnimatableSpacer(spacerHeightState: Dp) {
 @Composable
 fun SearchView(
     value: String,
-//    searchOffset: Animatable<Float, AnimationVector1D>,
     searchEnabled: Boolean,
     onValueChange: (String) -> Unit = {},
     onSearch: KeyboardActionScope.() -> Unit = {},
     updateSearchState: (Boolean) -> Unit = {},
     updateHeightState: (Boolean) -> Unit = {},
-    screenDensity: Float,
-    baseOffsetValue: Float,
+    targetOffsetValue: Float,
     offsetValueWithIcon: Float,
 ) {
 
@@ -176,7 +192,7 @@ fun SearchView(
             updateHeightState(true)
             coroutineScope.launch {
                 searchOffset.animateTo(
-                    targetValue = (baseOffsetValue / 2 - searchViewWidth.value * screenDensity / 2),
+                    targetValue = targetOffsetValue,
                     animationSpec = tween(
                         durationMillis = 2000,
                         delayMillis = 500
@@ -478,6 +494,16 @@ fun NotesAndPasswordsListItemPreview() {
 fun AlertDialogBeforeDeletePreview() {
     NotesAndPasswordsTheme {
         AlertDialogBeforeDelete()
+    }
+}
+
+@Preview(showBackground = true)
+@Composable
+fun MainBodyStatelessPreview() {
+    NotesAndPasswordsTheme {
+        MainBodyStateless(
+            list = getSimpleNapList(LocalContext.current.applicationContext)
+        )
     }
 }
 

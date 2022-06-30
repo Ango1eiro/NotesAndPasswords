@@ -12,6 +12,8 @@ import androidx.activity.compose.rememberLauncherForActivityResult
 import androidx.activity.result.contract.ActivityResultContracts
 import androidx.compose.animation.Crossfade
 import androidx.compose.animation.ExperimentalAnimationApi
+import androidx.compose.animation.animateContentSize
+import androidx.compose.animation.core.Spring
 import androidx.compose.animation.core.spring
 import androidx.compose.foundation.Image
 import androidx.compose.foundation.background
@@ -462,11 +464,16 @@ fun NoteElement(note: Note) {
 
     Card(
         modifier = Modifier
+            .animateContentSize(
+                animationSpec = spring(
+                    dampingRatio = Spring.DampingRatioLowBouncy,
+                    stiffness = Spring.StiffnessLow
+                ),
+            )
             .padding(8.dp)
             .clickable { expandedState = !expandedState }
 
-
-    ) {
+  ) {
         if (!expandedState) {
             Box(
                 contentAlignment = Center,
@@ -513,15 +520,6 @@ fun NoteElement(note: Note) {
                 ) {
                     Text(text = stringResource(R.string.text_collapse))
                 }
-//                Image(
-//                    painter = painterResource(id = R.drawable.close_fullscreen_48px),
-//                    contentDescription = null,
-//                    colorFilter = ColorFilter.tint(color = MaterialTheme.colors.primary),
-//                    modifier = Modifier
-//                        .align(TopEnd)
-//                        .size(24.dp)
-//                        .padding(4.dp)
-//                        .clickable { expandedState = !expandedState })
             }
         }
     }
@@ -575,6 +573,12 @@ fun CredentialElement(credential: Credential) {
 
     Card(
         modifier = Modifier
+            .animateContentSize(
+                animationSpec = spring(
+                    dampingRatio = Spring.DampingRatioLowBouncy,
+                    stiffness = Spring.StiffnessLow
+                ),
+            )
             .padding(8.dp)
             .clickable { expandedState = !expandedState }
     ) {
