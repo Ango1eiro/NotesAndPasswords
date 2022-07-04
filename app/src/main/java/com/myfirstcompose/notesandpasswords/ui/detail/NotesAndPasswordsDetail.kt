@@ -10,11 +10,10 @@ import android.util.Log
 import android.widget.Toast
 import androidx.activity.compose.rememberLauncherForActivityResult
 import androidx.activity.result.contract.ActivityResultContracts
-import androidx.compose.animation.Crossfade
-import androidx.compose.animation.ExperimentalAnimationApi
-import androidx.compose.animation.animateContentSize
+import androidx.compose.animation.*
 import androidx.compose.animation.core.Spring
 import androidx.compose.animation.core.spring
+import androidx.compose.animation.core.tween
 import androidx.compose.foundation.Image
 import androidx.compose.foundation.background
 import androidx.compose.foundation.border
@@ -285,24 +284,30 @@ fun NotesAndPasswordsDetailTop(
                     .padding(start = 8.dp),
             )
             Spacer(modifier = Modifier.height(12.dp))
-//            if (currentList == NotesAndPasswordsCurrentList.Notes) {
-//                CurrentListTopText(text = stringResource(R.string.text_notes))
-//            } else {
-//                CurrentListTopText(text = stringResource(R.string.text_passwords))
-//            }
-////            AnimatedContent(currentList){
-//                when(it){
-//                    NotesAndPasswordsCurrentList.Notes -> CurrentListTopText(text = stringResource(R.string.text_notes))
-//                    NotesAndPasswordsCurrentList.Passwords -> CurrentListTopText(text = stringResource(R.string.text_passwords))
-//                }
-//            }
-            Crossfade(targetState = currentList,
-                animationSpec = spring(stiffness = 10.0F),
-                modifier = Modifier.wrapContentSize()) {
-                if (it == NotesAndPasswordsCurrentList.Notes) {
-                    CurrentListTopText(text = stringResource(R.string.text_notes))
-                } else {
-                    CurrentListTopText(text = stringResource(R.string.text_passwords))
+            AnimatedContent(
+                targetState = currentList,
+                transitionSpec = {
+                    fadeIn() + slideInHorizontally(
+                        animationSpec = tween(400),
+                        initialOffsetX = { fullWidth ->
+                            when (targetState) {
+                                NotesAndPasswordsCurrentList.Notes -> -fullWidth
+                                NotesAndPasswordsCurrentList.Passwords -> fullWidth
+                            }
+                        }) with slideOutHorizontally(
+                        animationSpec = tween(200),
+                        targetOffsetX = { fullWidth ->
+                            when (targetState) {
+                                NotesAndPasswordsCurrentList.Notes -> fullWidth
+                                NotesAndPasswordsCurrentList.Passwords -> -fullWidth
+                            }
+                        })
+                }
+            ) { targetState ->
+                when (targetState) {
+                    NotesAndPasswordsCurrentList.Notes -> CurrentListTopText(text = stringResource(R.string.text_notes))
+                    NotesAndPasswordsCurrentList.Passwords -> CurrentListTopText(text = stringResource(
+                        R.string.text_passwords))
                 }
             }
         }
@@ -393,6 +398,7 @@ fun TopImageWithPermission(
 
 }
 
+@OptIn(ExperimentalAnimationApi::class)
 @Composable
 fun NotesAndPasswordsDetailBottom(
     currentList: NotesAndPasswordsCurrentList,
@@ -422,16 +428,35 @@ fun NotesAndPasswordsDetailBottom(
             }
 
     ) {
-        when (currentList) {
-            NotesAndPasswordsCurrentList.Notes -> NotesList(notes = nap.notes)
-            NotesAndPasswordsCurrentList.Passwords -> PasswordsList(credentials = nap.credentials)
-        }
-//        Crossfade(targetState = currentList, animationSpec = spring()) {
-//            when (it) {
-//                NotesAndPasswordsCurrentList.Notes -> NotesList(notes = nap.notes)
-//                NotesAndPasswordsCurrentList.Passwords -> PasswordsList(credentials = nap.credentials)
-//            }
+//        when (currentList) {
+//            NotesAndPasswordsCurrentList.Notes -> NotesList(notes = nap.notes)
+//            NotesAndPasswordsCurrentList.Passwords -> PasswordsList(credentials = nap.credentials)
 //        }
+        AnimatedContent(
+            targetState = currentList,
+            transitionSpec = {
+                fadeIn() + slideInHorizontally(
+                    animationSpec = tween(400),
+                    initialOffsetX = { fullWidth ->
+                        when (targetState) {
+                            NotesAndPasswordsCurrentList.Notes -> -fullWidth
+                            NotesAndPasswordsCurrentList.Passwords -> fullWidth
+                        }
+                    }) with slideOutHorizontally(
+                    animationSpec = tween(200),
+                    targetOffsetX = { fullWidth ->
+                        when (targetState) {
+                            NotesAndPasswordsCurrentList.Notes -> fullWidth
+                            NotesAndPasswordsCurrentList.Passwords -> -fullWidth
+                        }
+                    })
+            }
+        ) { targetState ->
+            when (targetState) {
+                NotesAndPasswordsCurrentList.Notes -> NotesList(notes = nap.notes)
+                NotesAndPasswordsCurrentList.Passwords -> PasswordsList(credentials = nap.credentials)
+            }
+        }
     }
 }
 

@@ -21,9 +21,9 @@ class NotesAndPasswordsViewModel(application: Application) : ViewModel() {
     val allNaps: LiveData<List<SimpleNap>>
     private val repository: NapRepository
 
-    private val _currentNap = MutableLiveData<Nap?>()
-    val currentNap: LiveData<Nap?>
-        get() = _currentNap
+//    private val _currentNap = MutableLiveData<Nap?>()
+//    val currentNap: LiveData<Nap?>
+//        get() = _currentNap
 
     private val _searchText = MutableLiveData("")
     val searchText: LiveData<String>
@@ -57,14 +57,14 @@ class NotesAndPasswordsViewModel(application: Application) : ViewModel() {
         repository.deleteNap(id)
     }
 
-    suspend fun setCurrentNap(id: Long) {
-        viewModelScope.launch(Dispatchers.IO) {
-            Log.v("VM", "Before _currentNap update")
-            _currentNap.postValue(repository.getDataBaseNapById(id).toNap())
-            Log.v("VM", "After _currentNap update")
-        }.join()
-
-    }
+//    suspend fun setCurrentNap(id: Long) {
+//        viewModelScope.launch(Dispatchers.IO) {
+//            Log.v("VM", "Before _currentNap update")
+//            _currentNap.postValue(repository.getDataBaseNapById(id).toNap())
+//            Log.v("VM", "After _currentNap update")
+//        }.join()
+//
+//    }
 
     suspend fun getNapById(id: Long) : Nap {
         return withContext(viewModelScope.coroutineContext + Dispatchers.IO) {
@@ -80,10 +80,10 @@ class NotesAndPasswordsViewModel(application: Application) : ViewModel() {
         }
     }
 
-    fun resetCurrentNap() {
-        _currentNap.value = null
-        Log.v("VM", "After _currentNap reset")
-    }
+//    fun resetCurrentNap() {
+//        _currentNap.value = null
+//        Log.v("VM", "After _currentNap reset")
+//    }
 
     fun setSearchText(newSearchText: String) {
         _searchText.postValue(newSearchText)

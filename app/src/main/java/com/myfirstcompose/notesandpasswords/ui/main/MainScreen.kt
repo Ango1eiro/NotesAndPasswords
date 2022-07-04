@@ -1,5 +1,6 @@
 package com.myfirstcompose.notesandpasswords.ui.main
 
+import android.content.res.Configuration
 import android.graphics.Bitmap
 import android.graphics.ImageDecoder
 import android.net.Uri
@@ -28,8 +29,10 @@ import androidx.compose.material.icons.filled.ArrowForward
 import androidx.compose.material.icons.filled.Search
 import androidx.compose.runtime.*
 import androidx.compose.runtime.livedata.observeAsState
+import androidx.compose.runtime.saveable.rememberSaveable
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Alignment.Companion.BottomEnd
+import androidx.compose.ui.ExperimentalComposeUiApi
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.graphics.ColorFilter
@@ -40,6 +43,7 @@ import androidx.compose.ui.layout.ContentScale
 import androidx.compose.ui.platform.LocalConfiguration
 import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.platform.LocalFocusManager
+import androidx.compose.ui.platform.LocalSoftwareKeyboardController
 import androidx.compose.ui.res.painterResource
 import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.text.input.ImeAction
@@ -68,11 +72,9 @@ fun MainBody(
 ) {
 
     val list by viewModel.allNaps.observeAsState(listOf())
-    if (viewModel.currentNap.value != null) {
-        viewModel.resetCurrentNap()
-    }
 
-    val updateSearchText: (String) -> Unit = {
+
+    val updateSaveableSearchText: (String) -> Unit = {
         viewModel.setSearchText(it)
     }
 
@@ -81,10 +83,25 @@ fun MainBody(
         onListElementClick = onListElementClick,
         onListElementDismiss = onListElementDismiss,
         onFabClick = onFabClick,
-        updateSearchText = updateSearchText,
-
+        updateSavableSearchText = updateSaveableSearchText
     )
 
+}
+
+@Composable
+fun rememberScreenConfiguration(
+    configuration: Configuration = LocalConfiguration.current,
+) = remember(configuration){
+    ScreenConfiguration(configuration)
+}
+
+class ScreenConfiguration(
+    configuration: Configuration
+){
+    val screenDensity = configuration.densityDpi / 160f
+    val baseOffsetValue = configuration.screenWidthDp.toFloat() * screenDensity
+    val offsetValueWithIcon = baseOffsetValue - 150F
+    val targetOffsetValue = (baseOffsetValue / 2 - searchViewWidth.value * screenDensity / 2)
 }
 
 @Composable
@@ -93,20 +110,22 @@ fun MainBodyStateless(
     onListElementClick: (Long) -> Unit = {},
     onListElementDismiss: (Long) -> Unit = {},
     onFabClick: () -> Unit = {},
-    updateSearchText: (String) -> Unit = {}
+    updateSavableSearchText: (String) -> Unit = {}
 ){
 
-    val configuration = LocalConfiguration.current
+//    val configuration = LocalConfiguration.current
     val focusManager = LocalFocusManager.current
 
-    val screenDensity = configuration.densityDpi / 160f
-    val baseOffsetValue = configuration.screenWidthDp.toFloat() * screenDensity
-    val offsetValueWithIcon = baseOffsetValue - 150F
-    val targetOffsetValue = (baseOffsetValue / 2 - searchViewWidth.value * screenDensity / 2)
+    val screenConfiguration = rememberScreenConfiguration()
+
+//    val screenDensity = configuration.densityDpi / 160f
+//    val baseOffsetValue = configuration.screenWidthDp.toFloat() * screenDensity
+//    val offsetValueWithIcon = baseOffsetValue - 150F
+//    val targetOffsetValue = (baseOffsetValue / 2 - searchViewWidth.value * screenDensity / 2)
 
     var searchText by remember { mutableStateOf("") }
     var searchEnabled by remember { mutableStateOf(false) }
-    var spacerHeightState by remember { mutableStateOf(0.dp) }
+    var spacerHeightState by remember { mutableStateOf(0) }
 
     val updateSearchState: (Boolean) -> Unit = {
         searchEnabled = it
@@ -114,9 +133,9 @@ fun MainBodyStateless(
 
     val updateHeightState: (Boolean) -> Unit = { expanded ->
         spacerHeightState = if (expanded) {
-            56.dp
+            56
         } else {
-            0.dp
+            0
         }
     }
 
@@ -126,7 +145,7 @@ fun MainBodyStateless(
 
     val onSearchValueChange: (String) -> Unit = {
         searchText = it
-        updateSearchText(searchText)
+        updateSavableSearchText(searchText)
     }
 
     Box {
@@ -134,7 +153,7 @@ fun MainBodyStateless(
             modifier = Modifier,
             horizontalAlignment = Alignment.CenterHorizontally
         ) {
-            AnimatableSpacer(spacerHeightState)
+            AnimatableSpacer(spacerHeightState.dp)
             NotesAndPasswordsList(list = list,
                 onListElementClick = onListElementClick,
                 onListElementDismiss = onListElementDismiss,
@@ -145,8 +164,8 @@ fun MainBodyStateless(
             searchEnabled = searchEnabled,
             onValueChange = onSearchValueChange,
             onSearch = onSearch,
-            targetOffsetValue = targetOffsetValue,
-            offsetValueWithIcon = offsetValueWithIcon,
+            targetOffsetValue = screenConfiguration.targetOffsetValue,
+            offsetValueWithIcon = screenConfiguration.offsetValueWithIcon,
             updateSearchState = updateSearchState,
             updateHeightState = updateHeightState,
             )
@@ -172,6 +191,7 @@ fun AnimatableSpacer(spacerHeightState: Dp) {
     Spacer(modifier = Modifier.height(spacerHeight))
 }
 
+@OptIn(ExperimentalComposeUiApi::class)
 @Composable
 fun SearchView(
     value: String,
@@ -186,6 +206,7 @@ fun SearchView(
 
     val coroutineScope = rememberCoroutineScope()
     val searchOffset = remember { Animatable(offsetValueWithIcon) }
+    val keyboardController = LocalSoftwareKeyboardController.current
 
     val onLeadingIconClick: () -> Unit = {
         if (!searchEnabled) {
@@ -199,6 +220,7 @@ fun SearchView(
                     )
                 )
                 updateSearchState(true)
+                keyboardController?.show()
              }
         }
     }

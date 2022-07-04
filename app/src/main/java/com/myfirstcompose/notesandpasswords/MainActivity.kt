@@ -68,6 +68,7 @@ fun NotesAndPasswordsNavHost(
         modifier = modifier
     ) {
         composable(NotesAndPasswordsListScreen.Main.name) {
+            viewModel.setSearchText("")
             MainBody(
                 onListElementClick = { id ->
                     navController.navigate("${NotesAndPasswordsListScreen.Detail.name}/$id")
