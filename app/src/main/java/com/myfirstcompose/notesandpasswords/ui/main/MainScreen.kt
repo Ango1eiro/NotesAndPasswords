@@ -113,15 +113,8 @@ fun MainBodyStateless(
     updateSavableSearchText: (String) -> Unit = {}
 ){
 
-//    val configuration = LocalConfiguration.current
     val focusManager = LocalFocusManager.current
-
     val screenConfiguration = rememberScreenConfiguration()
-
-//    val screenDensity = configuration.densityDpi / 160f
-//    val baseOffsetValue = configuration.screenWidthDp.toFloat() * screenDensity
-//    val offsetValueWithIcon = baseOffsetValue - 150F
-//    val targetOffsetValue = (baseOffsetValue / 2 - searchViewWidth.value * screenDensity / 2)
 
     var searchText by remember { mutableStateOf("") }
     var searchEnabled by remember { mutableStateOf(false) }
@@ -301,9 +294,7 @@ fun NotesAndPasswordsList(
     onListElementClick: (Long) -> Unit = {},
     onListElementDismiss: (Long) -> Unit = {},
     onFabClick: () -> Unit = {},
-
-    ) {
-
+) {
     Box {
         LazyColumn(
             modifier = Modifier

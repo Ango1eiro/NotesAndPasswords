@@ -74,6 +74,7 @@ fun NotesAndPasswordsDetail(
     val scope = rememberCoroutineScope()
 
     Log.v("NotesAndPasswordsDetail", "$currentRecomposeScope id - $id")
+    Log.v("NotesAndPasswordsDetail", "viewModel - $viewModel")
 
     var nap by remember { mutableStateOf<Nap?>(null) }
     LaunchedEffect(key1 = id) {
@@ -335,6 +336,7 @@ fun TopImageWithPermission(
 ) {
 
     var onImageClick = {}
+    Log.v("TopImageWithPermission","TopImageWithPermission + $currentRecomposeScope")
 
     // Execute when not in Preview mode
     if (!LocalInspectionMode.current) {

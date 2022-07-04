@@ -2,6 +2,7 @@ package com.myfirstcompose.notesandpasswords
 
 import android.app.Application
 import android.util.Log
+import androidx.compose.runtime.Stable
 import androidx.lifecycle.*
 import com.myfirstcompose.notesandpasswords.data.Nap
 import com.myfirstcompose.notesandpasswords.data.SimpleNap
@@ -13,7 +14,6 @@ import kotlinx.coroutines.flow.combine
 import kotlinx.coroutines.flow.flowOf
 import kotlinx.coroutines.launch
 import kotlinx.coroutines.withContext
-
 
 class NotesAndPasswordsViewModel(application: Application) : ViewModel() {
 
