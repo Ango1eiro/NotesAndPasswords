@@ -12,6 +12,4 @@ val PinkMedium = Color(0xFFf48fb1)
 val PinkLight = Color(0xFFffc1e3)
 val PinkSuperLight = Color(0xFFffeeff)
 val PinkHeavy = Color(0xFFbf5f82)
-
-
-
+val RedDelete = Color(0xFFF3706E)

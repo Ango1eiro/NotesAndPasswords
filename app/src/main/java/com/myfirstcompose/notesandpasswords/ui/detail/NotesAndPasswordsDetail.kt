@@ -31,11 +31,15 @@ import androidx.compose.material.icons.filled.Check
 import androidx.compose.runtime.*
 import androidx.compose.runtime.saveable.rememberSaveable
 import androidx.compose.ui.Alignment
+import androidx.compose.ui.Alignment.Companion.BottomCenter
 import androidx.compose.ui.Alignment.Companion.Center
 import androidx.compose.ui.Alignment.Companion.CenterVertically
 import androidx.compose.ui.Alignment.Companion.TopCenter
+import androidx.compose.ui.Alignment.Companion.TopEnd
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.clip
+import androidx.compose.ui.graphics.Color
+import androidx.compose.ui.graphics.Color.Companion.White
 import androidx.compose.ui.graphics.ColorFilter
 import androidx.compose.ui.graphics.asImageBitmap
 import androidx.compose.ui.graphics.painter.BitmapPainter
@@ -58,8 +62,7 @@ import com.myfirstcompose.notesandpasswords.R
 import com.myfirstcompose.notesandpasswords.data.Credential
 import com.myfirstcompose.notesandpasswords.data.Nap
 import com.myfirstcompose.notesandpasswords.data.Note
-import com.myfirstcompose.notesandpasswords.ui.theme.NotesAndPasswordsTheme
-import com.myfirstcompose.notesandpasswords.ui.theme.PinkSuperLight
+import com.myfirstcompose.notesandpasswords.ui.theme.*
 import com.myfirstcompose.notesandpasswords.utils.createCopyAndReturnRealPath
 import com.myfirstcompose.notesandpasswords.utils.getPreviewNap
 import kotlinx.coroutines.launch
@@ -129,6 +132,14 @@ fun NotesAndPasswordsDetail(
             Unit
         }
 
+        val deleteNote: (Note) -> Unit = { note ->
+            nap!!.notes.remove(note)
+        }
+
+        val deleteCredential: (Credential) -> Unit = { credential ->
+            nap!!.credentials.remove(credential)
+        }
+
         NotesAndPasswordsDetailStateless(
             nap = nap!!,
             currentList = currentList,
@@ -136,7 +147,9 @@ fun NotesAndPasswordsDetail(
             onSwipeRight = onSwipeRight,
             onSwipeLeft = onSwipeLeft,
             onFabSaveClick = onFabSaveClick,
-            onFabAddClick = onFabAddClick
+            onFabAddClick = onFabAddClick,
+            deleteNote = deleteNote,
+            deleteCredential = deleteCredential,
         )
     }
 }
@@ -150,6 +163,8 @@ fun NotesAndPasswordsDetailStateless(
     onSwipeLeft: () -> Unit = {},
     onFabSaveClick: () -> Unit = {},
     onFabAddClick: () -> Unit = {},
+    deleteNote: (Note) -> Unit = {},
+    deleteCredential: (Credential) -> Unit = {},
 ) {
 
     Log.v("NotesAndPasswordsDetail", "$currentRecomposeScope")
@@ -173,7 +188,9 @@ fun NotesAndPasswordsDetailStateless(
                     currentList = currentList,
                     nap = nap,
                     onSwipeRight = onSwipeRight,
-                    onSwipeLeft = onSwipeLeft
+                    onSwipeLeft = onSwipeLeft,
+                    deleteNote = deleteNote,
+                    deleteCredential = deleteCredential
                 )
             }
             FloatingActionButton(
@@ -285,32 +302,32 @@ fun NotesAndPasswordsDetailTop(
                     .padding(start = 8.dp),
             )
             Spacer(modifier = Modifier.height(12.dp))
-            AnimatedContent(
-                targetState = currentList,
-                transitionSpec = {
-                    fadeIn() + slideInHorizontally(
-                        animationSpec = tween(400),
-                        initialOffsetX = { fullWidth ->
-                            when (targetState) {
-                                NotesAndPasswordsCurrentList.Notes -> -fullWidth
-                                NotesAndPasswordsCurrentList.Passwords -> fullWidth
-                            }
-                        }) with slideOutHorizontally(
-                        animationSpec = tween(200),
-                        targetOffsetX = { fullWidth ->
-                            when (targetState) {
-                                NotesAndPasswordsCurrentList.Notes -> fullWidth
-                                NotesAndPasswordsCurrentList.Passwords -> -fullWidth
-                            }
-                        })
-                }
-            ) { targetState ->
-                when (targetState) {
-                    NotesAndPasswordsCurrentList.Notes -> CurrentListTopText(text = stringResource(R.string.text_notes))
-                    NotesAndPasswordsCurrentList.Passwords -> CurrentListTopText(text = stringResource(
-                        R.string.text_passwords))
-                }
-            }
+//            AnimatedContent(
+//                targetState = currentList,
+//                transitionSpec = {
+//                    fadeIn() + slideInHorizontally(
+//                        animationSpec = tween(400),
+//                        initialOffsetX = { fullWidth ->
+//                            when (targetState) {
+//                                NotesAndPasswordsCurrentList.Notes -> -fullWidth
+//                                NotesAndPasswordsCurrentList.Passwords -> fullWidth
+//                            }
+//                        }) with slideOutHorizontally(
+//                        animationSpec = tween(200),
+//                        targetOffsetX = { fullWidth ->
+//                            when (targetState) {
+//                                NotesAndPasswordsCurrentList.Notes -> fullWidth
+//                                NotesAndPasswordsCurrentList.Passwords -> -fullWidth
+//                            }
+//                        })
+//                }
+//            ) { targetState ->
+//                when (targetState) {
+//                    NotesAndPasswordsCurrentList.Notes -> CurrentListTopText(text = stringResource(R.string.text_notes))
+//                    NotesAndPasswordsCurrentList.Passwords -> CurrentListTopText(text = stringResource(
+//                        R.string.text_passwords))
+//                }
+//            }
         }
     }
 }
@@ -407,6 +424,8 @@ fun NotesAndPasswordsDetailBottom(
     nap: Nap,
     onSwipeRight: () -> Unit,
     onSwipeLeft: () -> Unit,
+    deleteNote: (Note) -> Unit = {},
+    deleteCredential: (Credential) -> Unit = {},
 ) {
     var offsetX by remember { mutableStateOf(0f) }
     var offsetY by remember { mutableStateOf(0f) }
@@ -430,47 +449,49 @@ fun NotesAndPasswordsDetailBottom(
             }
 
     ) {
-//        when (currentList) {
-//            NotesAndPasswordsCurrentList.Notes -> NotesList(notes = nap.notes)
-//            NotesAndPasswordsCurrentList.Passwords -> PasswordsList(credentials = nap.credentials)
-//        }
-        AnimatedContent(
-            targetState = currentList,
-            transitionSpec = {
-                fadeIn() + slideInHorizontally(
-                    animationSpec = tween(400),
-                    initialOffsetX = { fullWidth ->
-                        when (targetState) {
-                            NotesAndPasswordsCurrentList.Notes -> -fullWidth
-                            NotesAndPasswordsCurrentList.Passwords -> fullWidth
-                        }
-                    }) with slideOutHorizontally(
-                    animationSpec = tween(200),
-                    targetOffsetX = { fullWidth ->
-                        when (targetState) {
-                            NotesAndPasswordsCurrentList.Notes -> fullWidth
-                            NotesAndPasswordsCurrentList.Passwords -> -fullWidth
-                        }
-                    })
-            }
-        ) { targetState ->
-            when (targetState) {
-                NotesAndPasswordsCurrentList.Notes -> NotesList(notes = nap.notes)
-                NotesAndPasswordsCurrentList.Passwords -> PasswordsList(credentials = nap.credentials)
-            }
+        if (currentList == NotesAndPasswordsCurrentList.Notes) {
+            Bookmark(onClick = onSwipeRight,stringResource(R.string.text_passwords), offset = Pair(-8,-12),color = PinkLight)
+            Bookmark(onClick = onSwipeLeft,stringResource(R.string.text_notes), offset = Pair(-40,-12),color = PinkSuperLight)
+        } else {
+            Bookmark(onClick = onSwipeLeft,stringResource(R.string.text_notes), offset = Pair(-40,-12),color = PinkLight)
+            Bookmark(onClick = onSwipeRight,stringResource(R.string.text_passwords), offset = Pair(-8,-12),color = PinkSuperLight)
+        }
+        when (currentList) {
+            NotesAndPasswordsCurrentList.Notes -> NotesList(notes = nap.notes,deleteNote = deleteNote)
+            NotesAndPasswordsCurrentList.Passwords -> PasswordsList(credentials = nap.credentials,deleteCredential = deleteCredential)
         }
     }
 }
 
 @Composable
-fun NotesList(notes: List<Note>) {
+fun BoxScope.Bookmark(onClick: () -> Unit,text: String, offset: Pair<Int,Int>, color: Color) {
+    Button(
+        onClick = onClick,
+        elevation = null,
+        colors = ButtonDefaults.buttonColors(backgroundColor = color),
+        contentPadding = PaddingValues(top = 2.dp),
+        shape = RoundedCornerShape(8.dp, 8.dp, 0.dp, 0.dp),
+        modifier = Modifier
+            .align(TopEnd)
+            .offset(x = (offset.first).dp, y = (offset.second).dp)
+            .height(20.dp)
+    ) {
+        Text(text = text)
+    }
+}
+
+@Composable
+fun NotesList(
+    notes: List<Note>,
+    deleteNote: (Note) -> Unit = {},
+) {
 
     Box(
         Modifier
             .padding(8.dp)
             .background(
                 color = PinkSuperLight,
-                shape = RoundedCornerShape(5.dp)
+                shape = RoundedCornerShape(topStart = 5.dp, topEnd = 0.dp, bottomStart = 5.dp, bottomEnd = 5.dp)
             )
     ) {
         LazyColumn(
@@ -478,14 +499,17 @@ fun NotesList(notes: List<Note>) {
                 .fillMaxSize()
         ) {
             items(items = notes) { note ->
-                NoteElement(note)
+                NoteElement(note, deleteNote = deleteNote)
             }
         }
     }
 }
 
 @Composable
-fun NoteElement(note: Note) {
+fun NoteElement(
+    note: Note,
+    deleteNote: (Note) -> Unit = {},
+) {
 
     var expandedState by rememberSaveable { mutableStateOf(note.id == 0L) }
 
@@ -543,9 +567,24 @@ fun NoteElement(note: Note) {
                         .align(TopCenter)
                         .offset(y = (-8).dp)
                         .height(26.dp)
-//                        .clip(RoundedCornerShape(15.dp, 15.dp, 0.dp, 0.dp))
                 ) {
                     Text(text = stringResource(R.string.text_collapse))
+                }
+                Button(
+                    onClick = {deleteNote(note)},
+                    colors = ButtonDefaults.buttonColors(
+                        backgroundColor = RedDelete,
+                        contentColor = MaterialTheme.colors.onPrimary,
+                        disabledBackgroundColor = RedDelete,
+                    ),
+                    contentPadding = PaddingValues(bottom = 6.dp),
+                    shape = RoundedCornerShape(16.dp, 16.dp, 0.dp, 0.dp),
+                    modifier = Modifier
+                        .align(BottomCenter)
+                        .offset(y = (8).dp)
+                        .height(26.dp)
+                ) {
+                    Text(text = stringResource(R.string.text_delete))
                 }
             }
         }
@@ -557,8 +596,7 @@ fun NoteElementTextField(
     stateValue: String,
     labelText: String,
     onValueChange: (String) -> Unit,
-
-    ) {
+) {
     TextField(
         value = stateValue,
         label = { Text(text = labelText) },
@@ -573,13 +611,16 @@ fun NoteElementTextField(
 }
 
 @Composable
-fun PasswordsList(credentials: List<Credential>) {
+fun PasswordsList(
+    credentials: List<Credential>,
+    deleteCredential: (Credential) -> Unit = {},
+) {
     Box(
         Modifier
             .padding(8.dp)
             .background(
                 color = PinkSuperLight,
-                shape = RoundedCornerShape(5.dp)
+                shape = RoundedCornerShape(topStart = 5.dp, topEnd = 0.dp, bottomStart = 5.dp, bottomEnd = 5.dp)
             )
     ) {
         LazyColumn(
@@ -587,14 +628,17 @@ fun PasswordsList(credentials: List<Credential>) {
                 .fillMaxSize()
         ) {
             items(items = credentials) { credential ->
-                CredentialElement(credential)
+                CredentialElement(credential,deleteCredential)
             }
         }
     }
 }
 
 @Composable
-fun CredentialElement(credential: Credential) {
+fun CredentialElement(
+    credential: Credential,
+    deleteCredential: (Credential) -> Unit = {},
+) {
 
     var expandedState by rememberSaveable { mutableStateOf(credential.id == 0L) }
 
@@ -662,14 +706,22 @@ fun CredentialElement(credential: Credential) {
                 ) {
                     Text(text = stringResource(R.string.text_collapse))
                 }
-//                Image(
-//                    painter = painterResource(id = R.drawable.close_fullscreen_48px),
-//                    contentDescription = null,
-//                    modifier = Modifier
-//                        .align(TopEnd)
-//                        .size(24.dp)
-//                        .padding(4.dp)
-//                        .clickable { expandedState = !expandedState })
+                Button(
+                    onClick = {deleteCredential(credential)},
+                    colors = ButtonDefaults.buttonColors(
+                        backgroundColor = RedDelete,
+                        contentColor = MaterialTheme.colors.onPrimary,
+                        disabledBackgroundColor = RedDelete,
+                    ),
+                    contentPadding = PaddingValues(bottom = 6.dp),
+                    shape = RoundedCornerShape(16.dp, 16.dp, 0.dp, 0.dp),
+                    modifier = Modifier
+                        .align(BottomCenter)
+                        .offset(y = (8).dp)
+                        .height(26.dp)
+                ) {
+                    Text(text = stringResource(R.string.text_delete))
+                }
             }
         }
     }

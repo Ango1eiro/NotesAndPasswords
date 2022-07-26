@@ -17,6 +17,9 @@ import androidx.compose.foundation.clickable
 import androidx.compose.foundation.interaction.MutableInteractionSource
 import androidx.compose.foundation.layout.*
 import androidx.compose.foundation.lazy.LazyColumn
+import androidx.compose.foundation.lazy.grid.GridCells
+import androidx.compose.foundation.lazy.grid.LazyVerticalGrid
+import androidx.compose.foundation.lazy.grid.items
 import androidx.compose.foundation.lazy.items
 import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.foundation.text.KeyboardActionScope
@@ -29,7 +32,6 @@ import androidx.compose.material.icons.filled.ArrowForward
 import androidx.compose.material.icons.filled.Search
 import androidx.compose.runtime.*
 import androidx.compose.runtime.livedata.observeAsState
-import androidx.compose.runtime.saveable.rememberSaveable
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Alignment.Companion.BottomEnd
 import androidx.compose.ui.ExperimentalComposeUiApi
@@ -53,6 +55,7 @@ import androidx.compose.ui.tooling.preview.Preview
 import androidx.compose.ui.unit.Dp
 import androidx.compose.ui.unit.IntOffset
 import androidx.compose.ui.unit.dp
+import com.myfirstcompose.notesandpasswords.NapListType
 import com.myfirstcompose.notesandpasswords.NotesAndPasswordsViewModel
 import com.myfirstcompose.notesandpasswords.R
 import com.myfirstcompose.notesandpasswords.data.SimpleNap
@@ -73,17 +76,19 @@ fun MainBody(
 
     val list by viewModel.allNaps.observeAsState(listOf())
 
-
     val updateSaveableSearchText: (String) -> Unit = {
         viewModel.setSearchText(it)
     }
+
+    val napListTypeState = viewModel.napListType.collectAsState()
 
     MainBodyStateless(
         list = list,
         onListElementClick = onListElementClick,
         onListElementDismiss = onListElementDismiss,
         onFabClick = onFabClick,
-        updateSavableSearchText = updateSaveableSearchText
+        updateSavableSearchText = updateSaveableSearchText,
+        napListType = napListTypeState.value
     )
 
 }
@@ -110,7 +115,8 @@ fun MainBodyStateless(
     onListElementClick: (Long) -> Unit = {},
     onListElementDismiss: (Long) -> Unit = {},
     onFabClick: () -> Unit = {},
-    updateSavableSearchText: (String) -> Unit = {}
+    updateSavableSearchText: (String) -> Unit = {},
+    napListType: NapListType = NapListType.VerticalList
 ){
 
     val focusManager = LocalFocusManager.current
@@ -147,10 +153,17 @@ fun MainBodyStateless(
             horizontalAlignment = Alignment.CenterHorizontally
         ) {
             AnimatableSpacer(spacerHeightState.dp)
-            NotesAndPasswordsList(list = list,
-                onListElementClick = onListElementClick,
-                onListElementDismiss = onListElementDismiss,
-                onFabClick = onFabClick)
+            if (napListType == NapListType.VerticalList) {
+                NotesAndPasswordsList(list = list,
+                    onListElementClick = onListElementClick,
+                    onListElementDismiss = onListElementDismiss,
+                    onFabClick = onFabClick)
+            } else {
+                NotesAndPasswordsGrid(list = list,
+                    onListElementClick = onListElementClick,
+                    onListElementDismiss = onListElementDismiss,
+                    onFabClick = onFabClick)
+            }
         }
         SearchView(
             value = searchText,
@@ -161,7 +174,7 @@ fun MainBodyStateless(
             offsetValueWithIcon = screenConfiguration.offsetValueWithIcon,
             updateSearchState = updateSearchState,
             updateHeightState = updateHeightState,
-            )
+        )
     }
 
 }
@@ -323,7 +336,6 @@ fun NotesAndPasswordsList(
             Icon(Icons.Filled.Add, "")
         }
     }
-
 }
 
 @Composable
@@ -395,6 +407,62 @@ fun NotesAndPasswordsListItem(
 
                 )
         }
+    }
+}
+
+@Composable
+fun NotesAndPasswordsGridItem(
+    nap: SimpleNap,
+    onListElementClick: (Long) -> Unit = {},
+) {
+    val context = LocalContext.current
+    Card(
+        modifier = Modifier
+            .fillMaxWidth()
+            .padding(4.dp)
+            .height(64.dp)
+            .clickable { onListElementClick(nap.id) },
+        elevation = 10.dp
+    ) {
+
+        var painter: Painter = painterResource(id = R.drawable.placeholder_image)
+        var colorFilter: ColorFilter? = ColorFilter.tint(color = MaterialTheme.colors.secondary)
+        if (nap.image == "") {
+//                painter = painterResource(id = R.drawable.placeholder_image)
+        } else {
+            var bitmap: Bitmap? = null
+            if (Build.VERSION.SDK_INT < 28) {
+                @Suppress("deprecation")
+                bitmap = MediaStore.Images
+                    .Media.getBitmap(context.contentResolver, Uri.parse(nap.image))
+
+            } else {
+                val source = ImageDecoder
+                    .createSource(context.contentResolver, Uri.parse(nap.image))
+                try {
+                    bitmap = ImageDecoder.decodeBitmap(source)
+                } catch (e: Exception) {
+                    Toast.makeText(LocalContext.current, e.localizedMessage, Toast.LENGTH_SHORT)
+                        .show()
+                }
+
+            }
+            bitmap?.let {
+                painter = BitmapPainter(it.asImageBitmap())
+                colorFilter = null
+            }
+
+        }
+        Image(
+            painter = painter,
+            colorFilter = colorFilter,
+            contentDescription = null,
+            contentScale = ContentScale.Crop,
+            modifier = Modifier
+                .width(96.dp)
+                .fillMaxSize()
+        )
+
     }
 }
 
@@ -482,6 +550,44 @@ fun AlertDialogBeforeDelete(
         )
     }
 
+}
+
+@Composable
+fun NotesAndPasswordsGrid(
+    list: List<SimpleNap>,
+    onListElementClick: (Long) -> Unit = {},
+    onListElementDismiss: (Long) -> Unit = {},
+    onFabClick: () -> Unit = {},
+) {
+    Box {
+        LazyVerticalGrid(
+            modifier = Modifier
+                .padding(8.dp)
+                .fillMaxSize()
+            ,
+            columns = GridCells.Adaptive(minSize = 96.dp)
+
+        ) {
+            items(
+                items = list,
+                key = {
+                    it.id
+                }
+            ) { nap ->
+                NotesAndPasswordsGridItem(nap,onListElementClick)
+//                NotesAndPasswordsListItem(nap,onListElementClick)
+
+            }
+        }
+        FloatingActionButton(
+            onClick = onFabClick,
+            modifier = Modifier
+                .padding(8.dp)
+                .align(BottomEnd)
+        ) {
+            Icon(Icons.Filled.Add, "")
+        }
+    }
 }
 
 @Preview(showBackground = true)

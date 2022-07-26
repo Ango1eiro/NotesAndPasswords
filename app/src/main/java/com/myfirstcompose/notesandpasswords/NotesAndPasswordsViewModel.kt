@@ -9,9 +9,7 @@ import com.myfirstcompose.notesandpasswords.data.SimpleNap
 import com.myfirstcompose.notesandpasswords.room.AppDatabase
 import com.myfirstcompose.notesandpasswords.room.DataBaseNap
 import kotlinx.coroutines.Dispatchers
-import kotlinx.coroutines.flow.Flow
-import kotlinx.coroutines.flow.combine
-import kotlinx.coroutines.flow.flowOf
+import kotlinx.coroutines.flow.*
 import kotlinx.coroutines.launch
 import kotlinx.coroutines.withContext
 
@@ -29,6 +27,9 @@ class NotesAndPasswordsViewModel(application: Application) : ViewModel() {
     val searchText: LiveData<String>
         get() = _searchText
 
+    private val _napListType = MutableStateFlow(NapListType.VerticalList)
+    val napListType: StateFlow<NapListType> = _napListType.asStateFlow()
+
     init {
         val napDb = AppDatabase.getInstance(application)
         val napDao = napDb.notesAndPasswordsDao()
@@ -45,6 +46,14 @@ class NotesAndPasswordsViewModel(application: Application) : ViewModel() {
                     title = it.title,
                     image = it.image)
             }
+        }
+    }
+
+    fun switchNapListType() {
+        if (napListType.value == NapListType.VerticalList){
+            _napListType.update { NapListType.Grid }
+        }  else  {
+            _napListType.update { NapListType.VerticalList }
         }
     }
 
@@ -89,4 +98,8 @@ class NotesAndPasswordsViewModel(application: Application) : ViewModel() {
         _searchText.postValue(newSearchText)
     }
 
+}
+
+enum class NapListType {
+    VerticalList,Grid
 }

@@ -7,11 +7,14 @@ import androidx.activity.ComponentActivity
 import androidx.activity.compose.setContent
 import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.padding
-import androidx.compose.material.Scaffold
+import androidx.compose.material.*
 import androidx.compose.runtime.Composable
+import androidx.compose.runtime.collectAsState
 import androidx.compose.runtime.currentRecomposeScope
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.platform.LocalContext
+import androidx.compose.ui.res.painterResource
+import androidx.compose.ui.res.stringResource
 import androidx.lifecycle.viewmodel.compose.LocalViewModelStoreOwner
 import androidx.lifecycle.viewmodel.compose.viewModel
 import androidx.navigation.NavHostController
@@ -37,13 +40,47 @@ class MainActivity : ComponentActivity() {
 fun NotesAndPasswordsApp() {
     NotesAndPasswordsTheme {
         val navController = rememberNavController()
+        val owner = LocalViewModelStoreOwner.current
+        val viewModel: NotesAndPasswordsViewModel = viewModel(
+            viewModelStoreOwner = owner!!,
+            factory = NotesAndPasswordsViewModelFactory(
+                LocalContext.current.applicationContext
+                        as Application)
+        )
+        val napListTypeState = viewModel.napListType.collectAsState()
         Scaffold(
+            topBar = {
+                TopAppBar(
+                    title = { Text(text = stringResource(id = R.string.app_name)) },
+                    actions = {
+                        if (napListTypeState.value == NapListType.Grid) {
+                            IconButton(onClick = viewModel::switchNapListType) {
+                                Icon(
+                                    painter = painterResource(R.drawable.list_48px),
+                                    contentDescription = "",
+                                    tint = MaterialTheme.colors.onPrimary
+                                )
+                            }
+                        } else {
+                            IconButton(onClick = viewModel::switchNapListType) {
+                                Icon(
+                                    painter = painterResource(R.drawable.grid_view_48px),
+                                    contentDescription = "",
+                                    tint = MaterialTheme.colors.onPrimary)
+                            }
+                        }
+                    },
+                    backgroundColor = MaterialTheme.colors.primaryVariant,
+                    contentColor = MaterialTheme.colors.onPrimary
+                )
+            },
             modifier = Modifier
                 .fillMaxSize()
         ) { innerPadding ->
             NotesAndPasswordsNavHost(
                 navController = navController,
-                modifier = Modifier.padding(innerPadding)
+                modifier = Modifier.padding(innerPadding),
+                viewModel = viewModel
             )
         }
     }
@@ -53,15 +90,10 @@ fun NotesAndPasswordsApp() {
 fun NotesAndPasswordsNavHost(
     navController: NavHostController,
     modifier: Modifier = Modifier,
+    viewModel: NotesAndPasswordsViewModel
 ) {
     Log.v("NavHost upper", "$currentRecomposeScope")
-    val owner = LocalViewModelStoreOwner.current
-    val viewModel: NotesAndPasswordsViewModel = viewModel(
-        viewModelStoreOwner = owner!!,
-        factory = NotesAndPasswordsViewModelFactory(
-            LocalContext.current.applicationContext
-                    as Application)
-    )
+
 
     NavHost(
         navController = navController,
