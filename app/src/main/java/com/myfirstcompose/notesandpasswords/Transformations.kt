@@ -2,12 +2,11 @@ package com.myfirstcompose.notesandpasswords
 
 import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.toMutableStateList
-import com.myfirstcompose.notesandpasswords.data.Credential
-import com.myfirstcompose.notesandpasswords.data.Nap
-import com.myfirstcompose.notesandpasswords.data.Note
+import com.myfirstcompose.notesandpasswords.data.*
 import com.myfirstcompose.notesandpasswords.room.DataBaseCredential
 import com.myfirstcompose.notesandpasswords.room.DataBaseFullNap
 import com.myfirstcompose.notesandpasswords.room.DataBaseNote
+import com.myfirstcompose.notesandpasswords.room.DataBaseTag
 
 fun DataBaseFullNap.toNap() = Nap(
     id = this.dataBaseNap.id,
@@ -15,6 +14,7 @@ fun DataBaseFullNap.toNap() = Nap(
     image = this.dataBaseNap.image,
     notes = this.dataBaseNotes.map { it.toNote() }.toMutableStateList(),
     credentials = this.dataBaseCredentials.map { it.toCredential() }.toMutableStateList(),
+    tag = mutableStateOf(this.dataBaseNap.tag)
 )
 
 fun DataBaseNote.toNote() = Note(
@@ -28,4 +28,14 @@ fun DataBaseCredential.toCredential() = Credential(
     title = mutableStateOf(this.title),
     login = mutableStateOf(this.login),
     password = mutableStateOf(this.password)
+)
+
+fun DataBaseTag.toTag() = Tag(
+    id = this.id,
+    name = this.name
+)
+
+fun Tag.toChipTag() = ChipTag(
+    enabled = mutableStateOf(false),
+    name = this.name
 )

@@ -18,6 +18,12 @@ android {
         vectorDrawables {
             useSupportLibrary true
         }
+
+        javaCompileOptions {
+            annotationProcessorOptions {
+                arguments += ["room.schemaLocation": "$projectDir/schemas".toString()]
+            }
+        }
     }
 
     buildTypes {
@@ -85,5 +91,8 @@ dependencies {
 
     // permissions
     implementation "com.google.accompanist:accompanist-permissions:0.24.11-rc"
+
+    // datastore
+    implementation "androidx.datastore:datastore-preferences:1.0.0"
 
 }

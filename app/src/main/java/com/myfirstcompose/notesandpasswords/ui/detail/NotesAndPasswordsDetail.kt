@@ -10,10 +10,10 @@ import android.util.Log
 import android.widget.Toast
 import androidx.activity.compose.rememberLauncherForActivityResult
 import androidx.activity.result.contract.ActivityResultContracts
-import androidx.compose.animation.*
+import androidx.compose.animation.ExperimentalAnimationApi
+import androidx.compose.animation.animateContentSize
 import androidx.compose.animation.core.Spring
 import androidx.compose.animation.core.spring
-import androidx.compose.animation.core.tween
 import androidx.compose.foundation.Image
 import androidx.compose.foundation.background
 import androidx.compose.foundation.border
@@ -29,6 +29,7 @@ import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.filled.Add
 import androidx.compose.material.icons.filled.Check
 import androidx.compose.runtime.*
+import androidx.compose.runtime.livedata.observeAsState
 import androidx.compose.runtime.saveable.rememberSaveable
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Alignment.Companion.BottomCenter
@@ -39,7 +40,6 @@ import androidx.compose.ui.Alignment.Companion.TopEnd
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.clip
 import androidx.compose.ui.graphics.Color
-import androidx.compose.ui.graphics.Color.Companion.White
 import androidx.compose.ui.graphics.ColorFilter
 import androidx.compose.ui.graphics.asImageBitmap
 import androidx.compose.ui.graphics.painter.BitmapPainter
@@ -52,8 +52,9 @@ import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.text.input.KeyboardCapitalization
 import androidx.compose.ui.text.style.TextAlign
 import androidx.compose.ui.tooling.preview.Preview
+import androidx.compose.ui.unit.DpOffset
 import androidx.compose.ui.unit.dp
-import androidx.compose.ui.unit.sp
+import androidx.compose.ui.window.Dialog
 import com.google.accompanist.permissions.ExperimentalPermissionsApi
 import com.google.accompanist.permissions.PermissionStatus
 import com.google.accompanist.permissions.rememberPermissionState
@@ -62,6 +63,7 @@ import com.myfirstcompose.notesandpasswords.R
 import com.myfirstcompose.notesandpasswords.data.Credential
 import com.myfirstcompose.notesandpasswords.data.Nap
 import com.myfirstcompose.notesandpasswords.data.Note
+import com.myfirstcompose.notesandpasswords.data.Tag
 import com.myfirstcompose.notesandpasswords.ui.theme.*
 import com.myfirstcompose.notesandpasswords.utils.createCopyAndReturnRealPath
 import com.myfirstcompose.notesandpasswords.utils.getPreviewNap
@@ -83,6 +85,8 @@ fun NotesAndPasswordsDetail(
     LaunchedEffect(key1 = id) {
         nap = viewModel.getNewOrExistingNapById(id)
     }
+
+    val tags = viewModel.tags.observeAsState()
 
     if (nap != null) {
         Log.v("NotesAndPasswordsDetail", "nap:$nap")
@@ -150,6 +154,8 @@ fun NotesAndPasswordsDetail(
             onFabAddClick = onFabAddClick,
             deleteNote = deleteNote,
             deleteCredential = deleteCredential,
+            tags = tags.value,
+            onNewTag = viewModel::newTag
         )
     }
 }
@@ -165,6 +171,8 @@ fun NotesAndPasswordsDetailStateless(
     onFabAddClick: () -> Unit = {},
     deleteNote: (Note) -> Unit = {},
     deleteCredential: (Credential) -> Unit = {},
+    tags: List<Tag>? = emptyList(),
+    onNewTag: (String) -> Unit = {}
 ) {
 
     Log.v("NotesAndPasswordsDetail", "$currentRecomposeScope")
@@ -179,9 +187,10 @@ fun NotesAndPasswordsDetailStateless(
             Column {
                 // Picture and title
                 NotesAndPasswordsDetailTop(
-                    currentList = currentList,
                     nap = nap,
-                    onTitleChange = onTitleChange
+                    onTitleChange = onTitleChange,
+                    tags = tags,
+                    onNewTag = onNewTag
                 )
                 // Notes or passwords
                 NotesAndPasswordsDetailBottom(
@@ -193,6 +202,19 @@ fun NotesAndPasswordsDetailStateless(
                     deleteCredential = deleteCredential
                 )
             }
+//            val sh = GenericShape{ size,_ ->
+//                lineTo(size.width * 0.75F, 0F)
+//                lineTo(size.width, size.height * 0.25F)
+//                lineTo(size.width, size.height)
+//
+//            }
+//            Box(
+//                modifier = Modifier
+//                    .size(96.dp)
+//                    .clip(sh)
+//                    .background(PinkMedium)
+//                    .align(alignment = TopEnd)
+//            )
             FloatingActionButton(
                 onClick = onFabAddClick,
                 modifier = Modifier
@@ -220,26 +242,21 @@ fun NotesAndPasswordsDetailStateless(
 @OptIn(ExperimentalAnimationApi::class)
 @Composable
 fun NotesAndPasswordsDetailTop(
-    currentList: NotesAndPasswordsCurrentList,
     nap: Nap,
     onTitleChange: (String) -> Unit,
+    tags: List<Tag>?,
+    onNewTag: (String) -> Unit = {}
 ) {
 
-    val initialUri = if (nap.image == "") {
-        null
-    } else {
-        Uri.parse(nap.image)
-    }
-    Log.v("NotesAndPasswordsDetail", "Initial Uri - $initialUri")
     var imageUri by remember {
-        mutableStateOf(initialUri)
+        mutableStateOf(getInitialUri(nap.image))
     }
-    Log.v("NotesAndPasswordsDetail", "Image Uri - $imageUri")
+
     val context = LocalContext.current
     val bitmap = remember {
         mutableStateOf<Bitmap?>(null)
     }
-    Log.v("NotesAndPasswordsDetail", "bitmap - $bitmap")
+
     val launcher = rememberLauncherForActivityResult(contract =
     ActivityResultContracts.GetContent()) { uri: Uri? ->
         uri?.let {
@@ -262,7 +279,6 @@ fun NotesAndPasswordsDetailTop(
             }
         }
         nap.image = it.toString()
-        Log.v("NotesAndPasswordsDetail", "Image assigned")
     }
 
     Row(
@@ -302,48 +318,133 @@ fun NotesAndPasswordsDetailTop(
                     .padding(start = 8.dp),
             )
             Spacer(modifier = Modifier.height(12.dp))
-//            AnimatedContent(
-//                targetState = currentList,
-//                transitionSpec = {
-//                    fadeIn() + slideInHorizontally(
-//                        animationSpec = tween(400),
-//                        initialOffsetX = { fullWidth ->
-//                            when (targetState) {
-//                                NotesAndPasswordsCurrentList.Notes -> -fullWidth
-//                                NotesAndPasswordsCurrentList.Passwords -> fullWidth
-//                            }
-//                        }) with slideOutHorizontally(
-//                        animationSpec = tween(200),
-//                        targetOffsetX = { fullWidth ->
-//                            when (targetState) {
-//                                NotesAndPasswordsCurrentList.Notes -> fullWidth
-//                                NotesAndPasswordsCurrentList.Passwords -> -fullWidth
-//                            }
-//                        })
-//                }
-//            ) { targetState ->
-//                when (targetState) {
-//                    NotesAndPasswordsCurrentList.Notes -> CurrentListTopText(text = stringResource(R.string.text_notes))
-//                    NotesAndPasswordsCurrentList.Passwords -> CurrentListTopText(text = stringResource(
-//                        R.string.text_passwords))
-//                }
-//            }
+            TagDropdownMenu(currentTag = nap.tag, tags = tags, onNewTag = onNewTag )
         }
     }
 }
 
 @Composable
-fun CurrentListTopText(text: String) {
-    Text(
-        text = text,
-        fontSize = 36.sp,
-        color = MaterialTheme.colors.secondary,
-        modifier = Modifier
-            .padding(start = 8.dp)
-            .fillMaxSize(),
-        textAlign = TextAlign.Center
-    )
+fun TagDropdownMenu(
+    tags: List<Tag>?,
+    currentTag: MutableState<String>,
+    onNewTag: (String) -> Unit = {}
+) {
+    var expanded by remember { mutableStateOf(false) }
+
+    val defaultTagText = stringResource(R.string.text_seelct_tag)
+    var tagText by remember {
+        mutableStateOf(currentTag.value.ifEmpty {
+            defaultTagText
+        })
+    }
+
+    val showDialog = remember { mutableStateOf(false) }
+
+    Log.v("TagDropdownMenu", "$currentRecomposeScope")
+
+    Box(modifier = Modifier
+        .fillMaxSize()
+        .wrapContentSize(Alignment.TopStart)) {
+        Text(
+            tagText,
+            textAlign = TextAlign.Center,
+            modifier = Modifier
+                .padding(8.dp)
+                .fillMaxWidth()
+                .clickable(onClick = { expanded = true })
+                .align(Center)
+                .wrapContentSize()
+        )
+        DropdownMenu(
+            expanded = expanded,
+            onDismissRequest = { expanded = false },
+            offset = DpOffset(x = 8.dp, y = 0.dp),
+            modifier = Modifier
+                .background(PinkMedium)
+        ) {
+            tags?.forEachIndexed { index, s ->
+                DropdownMenuItem(onClick = {
+                    expanded = false
+                    currentTag.value = tags[index].name
+                    tagText = tags[index].name
+                }){
+                    Text(text=s.name)
+                }
+            }
+            DropdownMenuItem(
+                onClick = {
+                    showDialog.value = true
+                }
+            ){
+                Text(text= stringResource(R.string.text_create_new_tag))
+            }
+        }
+        DialogNewTag(onNewTag = onNewTag,showDialog = showDialog)
+    }
 }
+
+@Composable
+fun DialogNewTag(
+    onNewTag: (String) -> Unit = {},
+    onDismiss: () -> Unit = {},
+    showDialog: MutableState<Boolean>,
+) {
+
+    if (showDialog.value) {
+
+        var newTagText by remember {
+            mutableStateOf("")
+        }
+
+        Dialog(onDismissRequest = onDismiss) {
+            Surface(shape = MaterialTheme.shapes.medium) {
+                Column {
+                    Column(Modifier.padding(24.dp)) {
+                        Text(text = stringResource(R.string.text_enter_tag_name))
+                        Spacer(Modifier.size(16.dp))
+                        OutlinedTextField(
+                            value = newTagText,
+                            onValueChange = {newTagText = it},
+                            keyboardOptions = KeyboardOptions(capitalization = KeyboardCapitalization.Sentences),
+                            colors = TextFieldDefaults.outlinedTextFieldColors(
+                                unfocusedBorderColor = MaterialTheme.colors.secondary,
+                                unfocusedLabelColor = MaterialTheme.colors.secondary),
+                           )
+                    }
+                    Row(
+                        Modifier
+                            .padding(8.dp)
+                            .fillMaxWidth(),
+                        Arrangement.spacedBy(8.dp, Alignment.End),
+                    ) {
+                        Button(
+                            onClick = {
+                                onDismiss()
+                                showDialog.value = false
+                            })
+                        {
+                            Text(stringResource(R.string.answer_no))
+                        }
+                        Button(
+                            onClick = {
+                                onNewTag(newTagText)
+                                showDialog.value = false
+                            }) {
+                            Text(text = stringResource(R.string.answer_yes))
+                        }
+                    }
+                }
+            }
+        }
+    }
+}
+
+private fun getInitialUri(napImage: String) =
+    if (napImage == "") {
+        null
+    } else {
+        Uri.parse(napImage)
+    }
 
 @OptIn(ExperimentalPermissionsApi::class)
 @Composable
@@ -491,7 +592,10 @@ fun NotesList(
             .padding(8.dp)
             .background(
                 color = PinkSuperLight,
-                shape = RoundedCornerShape(topStart = 5.dp, topEnd = 0.dp, bottomStart = 5.dp, bottomEnd = 5.dp)
+                shape = RoundedCornerShape(topStart = 5.dp,
+                    topEnd = 0.dp,
+                    bottomStart = 5.dp,
+                    bottomEnd = 5.dp)
             )
     ) {
         LazyColumn(
@@ -620,7 +724,10 @@ fun PasswordsList(
             .padding(8.dp)
             .background(
                 color = PinkSuperLight,
-                shape = RoundedCornerShape(topStart = 5.dp, topEnd = 0.dp, bottomStart = 5.dp, bottomEnd = 5.dp)
+                shape = RoundedCornerShape(topStart = 5.dp,
+                    topEnd = 0.dp,
+                    bottomStart = 5.dp,
+                    bottomEnd = 5.dp)
             )
     ) {
         LazyColumn(

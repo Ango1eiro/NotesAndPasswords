@@ -22,7 +22,8 @@ fun getSimpleNapList(applicationContext: Context) = List(20) { i ->
     SimpleNap(
         id = i.toLong(),
         title = applicationContext.getString(R.string.text_title_preview,i),
-        image = "")
+        image = "",
+        tag = "")
 }
 
 fun getPreviewNap(): Nap {

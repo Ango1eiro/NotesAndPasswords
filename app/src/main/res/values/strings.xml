@@ -15,4 +15,7 @@
     <string name="text_password">Password</string>
     <string name="text_collapse">Collapse</string>
     <string name="text_delete">Delete</string>
+    <string name="text_seelct_tag">Select TAG</string>
+    <string name="text_create_new_tag"><![CDATA[<Create new TAG>]]></string>
+    <string name="text_enter_tag_name">Enter TAG name</string>
 </resources>

@@ -14,4 +14,7 @@
     <string name="text_password">Пароль</string>
     <string name="text_collapse">Свернуть</string>
     <string name="text_delete">Удалить</string>
+    <string name="text_seelct_tag">Выберите бирку</string>
+    <string name="text_create_new_tag"><![CDATA[<Создать новую бирку>]]></string>
+    <string name="text_enter_tag_name">Введите название бирки</string>
 </resources>

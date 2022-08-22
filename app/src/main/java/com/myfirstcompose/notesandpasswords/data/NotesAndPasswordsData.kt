@@ -9,6 +9,7 @@ data class Nap(
     val id: Long = 0,
     var title: MutableState<String> = mutableStateOf(""),
     var image: String = "",
+    var tag: MutableState<String> = mutableStateOf(""),
     val notes: SnapshotStateList<Note> = mutableStateListOf(),
     val credentials: SnapshotStateList<Credential> = mutableStateListOf()
 )
@@ -16,7 +17,8 @@ data class Nap(
 data class SimpleNap (
     val id: Long,
     var title: String,
-    val image: String
+    val image: String,
+    val tag: String
 )
 
 data class Note (
@@ -32,6 +34,12 @@ data class Credential (
     var password: MutableState<String> = mutableStateOf("")
 )
 
-enum class NotesAndPasswordsFolder {
-    Work, Personal
-}
+data class Tag (
+    val id: Long = 0,
+    val name: String = ""
+)
+
+data class ChipTag (
+    val enabled: MutableState<Boolean> = mutableStateOf(false),
+    val name: String = ""
+)

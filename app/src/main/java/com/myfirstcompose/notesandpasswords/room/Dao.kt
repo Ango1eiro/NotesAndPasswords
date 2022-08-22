@@ -20,7 +20,7 @@ interface NotesAndPasswordsDao {
     @Transaction
     fun insertNap(nap: Nap)
     {
-        val id = insertNap(DataBaseNap(id = nap.id, title = nap.title.value, image = nap.image))
+        val id = insertNap(DataBaseNap(id = nap.id, title = nap.title.value, image = nap.image, tag = nap.tag.value))
         nap.notes.forEach{
             insertNote(DataBaseNote(napId = id, id = it.id, title = it.title.value, content = it.content.value))
         }
@@ -28,6 +28,9 @@ interface NotesAndPasswordsDao {
             insertCredential(DataBaseCredential(napId = id, id = it.id, title = it.title.value, login = it.login.value, password = it.password.value))
         }
     }
+
+    @Insert(onConflict = OnConflictStrategy.REPLACE)
+    fun newTag(tag: DataBaseTag) : Long
 
     @Query("DELETE FROM naps WHERE id = :id")
     fun deleteNap(id: Long)
@@ -40,5 +43,8 @@ interface NotesAndPasswordsDao {
 
     @Query("SELECT * FROM naps WHERE id = :id")
     fun getFullNap(id: Long) : DataBaseFullNap
+
+    @Query("SELECT * FROM tags")
+    fun getAllTags() : Flow<List<DataBaseTag>>
 
 }

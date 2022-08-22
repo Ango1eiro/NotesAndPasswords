@@ -5,16 +5,19 @@ import android.os.Bundle
 import android.util.Log
 import androidx.activity.ComponentActivity
 import androidx.activity.compose.setContent
+import androidx.compose.foundation.layout.RowScope
 import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.padding
+import androidx.compose.foundation.layout.size
 import androidx.compose.material.*
-import androidx.compose.runtime.Composable
-import androidx.compose.runtime.collectAsState
-import androidx.compose.runtime.currentRecomposeScope
+import androidx.compose.material.icons.Icons
+import androidx.compose.material.icons.filled.ArrowBack
+import androidx.compose.runtime.*
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.res.painterResource
 import androidx.compose.ui.res.stringResource
+import androidx.compose.ui.unit.dp
 import androidx.lifecycle.viewmodel.compose.LocalViewModelStoreOwner
 import androidx.lifecycle.viewmodel.compose.viewModel
 import androidx.navigation.NavHostController
@@ -38,38 +41,82 @@ class MainActivity : ComponentActivity() {
 
 @Composable
 fun NotesAndPasswordsApp() {
+
+    val navController = rememberNavController()
+    val viewModel: NotesAndPasswordsViewModel = viewModel(
+        viewModelStoreOwner = LocalViewModelStoreOwner.current!!,
+        factory = NotesAndPasswordsViewModelFactory(
+            LocalContext.current.applicationContext
+                    as Application)
+    )
+
+    // State of the current list type [Grid|List]
+    val napListTypeState = viewModel.napListType.collectAsState()
+
+    // Listener to destination change is used for dynamic AppBar buttons
+    var canPop by remember { mutableStateOf(false) }
+    navController.addOnDestinationChangedListener { controller, _, _ ->
+        canPop = controller.previousBackStackEntry != null
+    }
+
+    // AppBar navigation button
+    val navigationIcon: (@Composable () -> Unit)? =
+        if (canPop) {
+            {
+                IconButton(onClick = navController::popBackStack) {
+                    Icon(
+                        imageVector = Icons.Filled.ArrowBack,
+                        contentDescription = "",
+                        tint = MaterialTheme.colors.onPrimary
+                    )
+                }
+            }
+        } else {
+            null
+        }
+
+    // AppBar actions buttons
+    val actions: (@Composable RowScope.() -> Unit) =
+        if (canPop) {
+            {}
+        } else {
+            {
+                IconButton(onClick = {viewModel.invertFilterState()}) {
+                    Icon(
+                        painter = painterResource(R.drawable.baseline_filter_alt_black_48),
+                        contentDescription = "",
+                        tint = MaterialTheme.colors.onPrimary,
+                        modifier = Modifier.size(36.dp)
+                    )
+                }
+                if (napListTypeState.value == NapListType.Grid) {
+                    IconButton(onClick = viewModel::switchNapListType) {
+                        Icon(
+                            painter = painterResource(R.drawable.list_48px),
+                            contentDescription = "",
+                            tint = MaterialTheme.colors.onPrimary,
+                            modifier = Modifier.size(36.dp)
+                        )
+                    }
+                } else {
+                    IconButton(onClick = viewModel::switchNapListType) {
+                        Icon(
+                            painter = painterResource(R.drawable.grid_view_48px),
+                            contentDescription = "",
+                            tint = MaterialTheme.colors.onPrimary,
+                            modifier = Modifier.size(36.dp))
+                    }
+                }
+            }
+        }
+
     NotesAndPasswordsTheme {
-        val navController = rememberNavController()
-        val owner = LocalViewModelStoreOwner.current
-        val viewModel: NotesAndPasswordsViewModel = viewModel(
-            viewModelStoreOwner = owner!!,
-            factory = NotesAndPasswordsViewModelFactory(
-                LocalContext.current.applicationContext
-                        as Application)
-        )
-        val napListTypeState = viewModel.napListType.collectAsState()
         Scaffold(
             topBar = {
                 TopAppBar(
                     title = { Text(text = stringResource(id = R.string.app_name)) },
-                    actions = {
-                        if (napListTypeState.value == NapListType.Grid) {
-                            IconButton(onClick = viewModel::switchNapListType) {
-                                Icon(
-                                    painter = painterResource(R.drawable.list_48px),
-                                    contentDescription = "",
-                                    tint = MaterialTheme.colors.onPrimary
-                                )
-                            }
-                        } else {
-                            IconButton(onClick = viewModel::switchNapListType) {
-                                Icon(
-                                    painter = painterResource(R.drawable.grid_view_48px),
-                                    contentDescription = "",
-                                    tint = MaterialTheme.colors.onPrimary)
-                            }
-                        }
-                    },
+                    navigationIcon = navigationIcon,
+                    actions = actions,
                     backgroundColor = MaterialTheme.colors.primaryVariant,
                     contentColor = MaterialTheme.colors.onPrimary
                 )

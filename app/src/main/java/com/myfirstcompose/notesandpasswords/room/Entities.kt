@@ -17,17 +17,21 @@ class DataBaseNap {
     @ColumnInfo(name = "image")
     var image: String = ""
 
-    constructor(id: Long, title: String, image: String) {
+    @ColumnInfo(name = "tag", defaultValue = "")
+    var tag: String = ""
+
+    constructor(id: Long, title: String, image: String, tag: String) {
         this.id = id
         this.title = title
         this.image = image
+        this.tag = tag
     }
 
 }
 
 data class DataBaseFullNap (
     @Embedded
-    var dataBaseNap: DataBaseNap = DataBaseNap(0,"",""),
+    var dataBaseNap: DataBaseNap = DataBaseNap(0,"","",""),
     @Relation(parentColumn = "id", entityColumn = "napId")
     var dataBaseNotes: List<DataBaseNote> = listOf(),
     @Relation(parentColumn = "id", entityColumn = "napId")
@@ -96,6 +100,24 @@ class DataBaseCredential {
         this.title = title
         this.login = login
         this.password = password
+    }
+
+}
+
+@Entity(tableName = "tags", indices = [Index(value = ["name"], unique = true)])
+class DataBaseTag {
+
+    @PrimaryKey(autoGenerate = true)
+    @NonNull
+    @ColumnInfo(name = "id")
+    var id: Long = 0
+
+    @ColumnInfo(name = "name")
+    var name: String = ""
+
+    constructor(id: Long, name: String) {
+        this.id = id
+        this.name = name
     }
 
 }
