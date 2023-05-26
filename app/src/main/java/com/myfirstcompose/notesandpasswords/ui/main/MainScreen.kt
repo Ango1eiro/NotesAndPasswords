@@ -38,8 +38,6 @@ import androidx.compose.material.icons.filled.Search
 import androidx.compose.runtime.*
 import androidx.compose.runtime.livedata.observeAsState
 import androidx.compose.ui.Alignment
-import androidx.compose.ui.Alignment.Companion.Bottom
-import androidx.compose.ui.Alignment.Companion.BottomCenter
 import androidx.compose.ui.Alignment.Companion.BottomEnd
 import androidx.compose.ui.Alignment.Companion.Center
 import androidx.compose.ui.ExperimentalComposeUiApi
@@ -65,7 +63,6 @@ import androidx.compose.ui.tooling.preview.Preview
 import androidx.compose.ui.unit.Dp
 import androidx.compose.ui.unit.IntOffset
 import androidx.compose.ui.unit.dp
-import androidx.compose.ui.window.Dialog
 import com.myfirstcompose.notesandpasswords.NapListType
 import com.myfirstcompose.notesandpasswords.NotesAndPasswordsViewModel
 import com.myfirstcompose.notesandpasswords.R
@@ -423,7 +420,7 @@ fun NotesAndPasswordsListItem(
     nap: SimpleNap,
     onListElementClick: (Long) -> Unit = {},
 ) {
-    val imageDataPair = getImageData(nap, LocalContext.current)
+//    val imageDataPair = getImageData(nap, LocalContext.current)
     Card(
         modifier = Modifier
             .fillMaxWidth()
@@ -437,9 +434,28 @@ fun NotesAndPasswordsListItem(
             modifier = Modifier,
             verticalAlignment = Alignment.CenterVertically
         ) {
+            val painter: Painter = painterResource(id = R.drawable.placeholder_image)
+            var painterState by remember {
+                mutableStateOf(painter)
+            }
+            val colorFilter: ColorFilter? = ColorFilter.tint(color = MaterialTheme.colors.secondary)
+            var colorFilterState by remember {
+                mutableStateOf(colorFilter)
+            }
+
+            val context = LocalContext.current
+
+            LaunchedEffect(nap) {
+                val imageDataPair = getImageData(nap, context)
+                if (imageDataPair.second != null) {
+                    painterState = imageDataPair.second as Painter
+                    colorFilterState = null
+                }
+            }
+
             Image(
-                painter = imageDataPair.second,
-                colorFilter = imageDataPair.first,
+                painter = painterState,
+                colorFilter = colorFilterState,
                 contentDescription = null,
                 contentScale = ContentScale.Crop,
                 modifier = Modifier
@@ -490,7 +506,6 @@ fun NotesAndPasswordsGridItem(
     nap: SimpleNap,
     onListElementClick: (Long) -> Unit = {},
 ) {
-    val imageDataPair = getImageData(nap, LocalContext.current)
 
     Card(
         modifier = Modifier
@@ -500,9 +515,29 @@ fun NotesAndPasswordsGridItem(
             .clickable { onListElementClick(nap.id) },
         elevation = 10.dp
     ) {
+
+        val painter: Painter = painterResource(id = R.drawable.placeholder_image)
+        var painterState by remember {
+            mutableStateOf(painter)
+        }
+        val colorFilter: ColorFilter? = ColorFilter.tint(color = MaterialTheme.colors.secondary)
+        var colorFilterState by remember {
+            mutableStateOf(colorFilter)
+        }
+
+        val context = LocalContext.current
+
+        LaunchedEffect(nap) {
+            val imageDataPair = getImageData(nap, context)
+            if (imageDataPair.second != null) {
+                painterState = imageDataPair.second as Painter
+                colorFilterState = null
+            }
+        }
+
         Image(
-            painter = imageDataPair.second,
-            colorFilter = imageDataPair.first,
+            painter = painterState,
+            colorFilter = colorFilterState,
             contentDescription = null,
             contentScale = ContentScale.Crop,
             modifier = Modifier
@@ -513,13 +548,12 @@ fun NotesAndPasswordsGridItem(
     }
 }
 
-@Composable
 private fun getImageData(
     nap: SimpleNap,
     context: Context
-): Pair<ColorFilter?, Painter> {
-    var painter: Painter = painterResource(id = R.drawable.placeholder_image)
-    var colorFilter: ColorFilter? = ColorFilter.tint(color = MaterialTheme.colors.secondary)
+): Pair<ColorFilter?, Painter?> {
+    var painter: Painter? = null
+    var colorFilter: ColorFilter? = null
     if (nap.image != "") {
         var bitmap: Bitmap? = null
         if (Build.VERSION.SDK_INT < 28) {
@@ -533,7 +567,7 @@ private fun getImageData(
             try {
                 bitmap = ImageDecoder.decodeBitmap(source)
             } catch (e: Exception) {
-                Toast.makeText(LocalContext.current, e.localizedMessage, Toast.LENGTH_SHORT)
+                Toast.makeText(context, e.localizedMessage, Toast.LENGTH_SHORT)
                     .show()
             }
 
@@ -546,7 +580,6 @@ private fun getImageData(
     }
     return Pair(colorFilter, painter)
 }
-
 
 @ExperimentalMaterialApi
 @Composable
