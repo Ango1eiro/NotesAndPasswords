@@ -5,6 +5,15 @@ import android.os.Bundle
 import android.util.Log
 import androidx.activity.ComponentActivity
 import androidx.activity.compose.setContent
+import androidx.compose.animation.EnterTransition
+import androidx.compose.animation.ExitTransition
+import androidx.compose.animation.core.LinearEasing
+import androidx.compose.animation.core.tween
+import androidx.compose.animation.fadeOut
+import androidx.compose.animation.shrinkOut
+import androidx.compose.animation.slideInHorizontally
+import androidx.compose.animation.slideOut
+import androidx.compose.animation.slideOutHorizontally
 import androidx.compose.foundation.layout.RowScope
 import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.padding
@@ -47,7 +56,8 @@ fun NotesAndPasswordsApp() {
         viewModelStoreOwner = LocalViewModelStoreOwner.current!!,
         factory = NotesAndPasswordsViewModelFactory(
             LocalContext.current.applicationContext
-                    as Application)
+                    as Application
+        )
     )
 
     // State of the current list type [Grid|List]
@@ -81,7 +91,7 @@ fun NotesAndPasswordsApp() {
             {}
         } else {
             {
-                IconButton(onClick = {viewModel.invertFilterState()}) {
+                IconButton(onClick = { viewModel.invertFilterState() }) {
                     Icon(
                         painter = painterResource(R.drawable.baseline_filter_alt_black_48),
                         contentDescription = "",
@@ -104,7 +114,8 @@ fun NotesAndPasswordsApp() {
                             painter = painterResource(R.drawable.grid_view_48px),
                             contentDescription = "",
                             tint = MaterialTheme.colors.onPrimary,
-                            modifier = Modifier.size(36.dp))
+                            modifier = Modifier.size(36.dp)
+                        )
                     }
                 }
             }
@@ -137,7 +148,7 @@ fun NotesAndPasswordsApp() {
 fun NotesAndPasswordsNavHost(
     navController: NavHostController,
     modifier: Modifier = Modifier,
-    viewModel: NotesAndPasswordsViewModel
+    viewModel: NotesAndPasswordsViewModel,
 ) {
     Log.v("NavHost upper", "$currentRecomposeScope")
 
@@ -147,7 +158,11 @@ fun NotesAndPasswordsNavHost(
         startDestination = NotesAndPasswordsListScreen.Main.name,
         modifier = modifier
     ) {
-        composable(NotesAndPasswordsListScreen.Main.name) {
+        composable(
+            route = NotesAndPasswordsListScreen.Main.name,
+            enterTransition = { EnterTransition.None },
+            exitTransition = { ExitTransition.None }
+        ) {
             viewModel.setSearchText("")
             MainBody(
                 onListElementClick = { id ->
@@ -162,13 +177,17 @@ fun NotesAndPasswordsNavHost(
         }
         composable(
             route = "${NotesAndPasswordsListScreen.Detail.name}/{id}",
+            enterTransition = { EnterTransition.None },
+//            exitTransition = {ExitTransition.None},
+            exitTransition = {
+                fadeOut()
+            },
             arguments = listOf(
                 navArgument("id") {
                     type = NavType.LongType
                 }
             ),
-        )
-        { entry ->
+        ) { entry ->
             val id = entry.arguments?.getLong("id") ?: -1
             Log.v("NavHost inside", "Before detail $currentRecomposeScope")
             Log.v("NavHost inside", "navController $navController")

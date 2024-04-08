@@ -400,7 +400,7 @@ fun NotesAndPasswordsList(
                     it.id
                 }
             ) { nap ->
-//                NotesAndPasswordsListItem(nap,onListElementClick)
+                //NotesAndPasswordsListItem(nap,onListElementClick)
                 SwipeToDismissElement(nap, onListElementClick, onListElementDismiss, modifier = Modifier.animateItemPlacement())
             }
         }
@@ -479,7 +479,6 @@ fun NotesAndPasswordsListItem(
             Box(
                 modifier = Modifier
                     .size(64.dp)
-//                    .clip(sh)
                     .background(PinkMedium, shape = sh)
             ) {
                 Text(
@@ -491,12 +490,8 @@ fun NotesAndPasswordsListItem(
                         .align(alignment = Center)
                         .offset(x = (12).dp, y = (12).dp)
                         .rotate(-45F)
-
-//                        .padding(16.dp)
                 )
-
             }
-
         }
     }
 }
