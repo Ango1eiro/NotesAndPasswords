@@ -595,8 +595,8 @@ fun SwipeToDismissElement(
     val dismissState = rememberDismissState(
         initialValue = DismissValue.Default
     )
-    if (dismissState.isDismissed(DismissDirection.EndToStart) || dismissState.isDismissed(
-            DismissDirection.StartToEnd)
+    if (dismissState.isDismissed(DismissDirection.EndToStart) ||
+        dismissState.isDismissed(DismissDirection.StartToEnd)
     ) {
         AlertDialogBeforeDelete(
             onYes = {
@@ -619,6 +619,7 @@ fun SwipeToDismissElement(
         },
         /*** Set Direction to dismiss */
         directions = setOf(DismissDirection.EndToStart, DismissDirection.StartToEnd),
+        dismissThresholds = { _ -> FractionalThreshold(0.6f) },
         modifier = modifier
     )
 }

@@ -56,7 +56,7 @@ class NotesAndPasswordsViewModel(application: Application) : ViewModel() {
             }
         }.stateIn(scope = viewModelScope, started = SharingStarted.Lazily, initialValue = NapListType.VerticalList)
 
-        tags = Transformations.map(repository.getAllTags().asLiveData()) { data ->
+        tags = repository.getAllTags().asLiveData().map { data ->
             data.map { it.toTag() }
         }
 
@@ -71,7 +71,7 @@ class NotesAndPasswordsViewModel(application: Application) : ViewModel() {
                 else mDatabaseNaps
             }
             .asLiveData()
-        allNaps = Transformations.map(allDataBaseNaps) { data ->
+        allNaps = allDataBaseNaps.map { data ->
             data.map {
                 SimpleNap(id = it.id,
                     title = it.title,
