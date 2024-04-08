@@ -28,9 +28,11 @@ import androidx.compose.material.*
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.filled.Add
 import androidx.compose.material.icons.filled.Check
+import androidx.compose.material.icons.filled.Clear
 import androidx.compose.runtime.*
 import androidx.compose.runtime.livedata.observeAsState
 import androidx.compose.runtime.saveable.rememberSaveable
+import androidx.compose.ui.AbsoluteAlignment
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Alignment.Companion.BottomCenter
 import androidx.compose.ui.Alignment.Companion.Center
@@ -45,11 +47,16 @@ import androidx.compose.ui.graphics.asImageBitmap
 import androidx.compose.ui.graphics.painter.BitmapPainter
 import androidx.compose.ui.input.pointer.pointerInput
 import androidx.compose.ui.layout.ContentScale
+import androidx.compose.ui.platform.ClipboardManager
+import androidx.compose.ui.platform.LocalClipboardManager
 import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.platform.LocalInspectionMode
 import androidx.compose.ui.res.painterResource
 import androidx.compose.ui.res.stringResource
+import androidx.compose.ui.text.AnnotatedString
 import androidx.compose.ui.text.input.KeyboardCapitalization
+import androidx.compose.ui.text.input.PasswordVisualTransformation
+import androidx.compose.ui.text.input.VisualTransformation
 import androidx.compose.ui.text.style.TextAlign
 import androidx.compose.ui.tooling.preview.Preview
 import androidx.compose.ui.unit.DpOffset
@@ -497,9 +504,11 @@ fun TopImageWithPermission(
             modifier = Modifier
                 .size(192.dp)
                 .fillMaxSize()
-                .border(width = 1.dp,
+                .border(
+                    width = 1.dp,
                     color = MaterialTheme.colors.secondary,
-                    shape = RoundedCornerShape(10.dp))
+                    shape = RoundedCornerShape(10.dp)
+                )
                 .clickable { onImageClick() }
         )
     } else {
@@ -592,10 +601,12 @@ fun NotesList(
             .padding(8.dp)
             .background(
                 color = PinkSuperLight,
-                shape = RoundedCornerShape(topStart = 5.dp,
+                shape = RoundedCornerShape(
+                    topStart = 5.dp,
                     topEnd = 0.dp,
                     bottomStart = 5.dp,
-                    bottomEnd = 5.dp)
+                    bottomEnd = 5.dp
+                )
             )
     ) {
         LazyColumn(
@@ -703,7 +714,7 @@ fun NoteElementTextField(
 ) {
     TextField(
         value = stateValue,
-        label = { Text(text = labelText) },
+        label = { Text(text = labelText, color = MaterialTheme.colors.primary) },
         onValueChange = onValueChange,
         keyboardOptions = KeyboardOptions(capitalization = KeyboardCapitalization.Sentences),
         colors = TextFieldDefaults.textFieldColors(
@@ -724,10 +735,12 @@ fun PasswordsList(
             .padding(8.dp)
             .background(
                 color = PinkSuperLight,
-                shape = RoundedCornerShape(topStart = 5.dp,
+                shape = RoundedCornerShape(
+                    topStart = 5.dp,
                     topEnd = 0.dp,
                     bottomStart = 5.dp,
-                    bottomEnd = 5.dp)
+                    bottomEnd = 5.dp
+                )
             )
     ) {
         LazyColumn(
@@ -791,14 +804,17 @@ fun CredentialElement(
                         labelText = stringResource(R.string.text_login),
                         onValueChange = {
                             credential.login.value = it
-                        }
+                        },
+                        showCopyToClipboardButton = true
                     )
                     CredentialElementTextField(
                         stateValue = credential.password.value,
                         labelText = stringResource(R.string.text_password),
                         onValueChange = {
                             credential.password.value = it
-                        }
+                        },
+                        showCopyToClipboardButton = true,
+                        showRevealPasswordButton = true
                     )
                 }
                 Button(
@@ -840,17 +856,71 @@ fun CredentialElementTextField(
     labelText: String,
     onValueChange: (String) -> Unit,
     keyboardOptions: KeyboardOptions = KeyboardOptions(),
+    showCopyToClipboardButton: Boolean = false,
+    showRevealPasswordButton: Boolean = false
 ) {
+
+    var showPassword by remember {
+        mutableStateOf(!showRevealPasswordButton)
+    }
+
+    val clipboardManager: ClipboardManager = LocalClipboardManager.current
+    val trailingIcons = @Composable {
+
+        Row(
+            horizontalArrangement = Arrangement.spacedBy(4.dp),
+            modifier = Modifier
+                .padding(
+                    horizontal = 4.dp
+                )
+        ) {
+            Spacer(modifier = Modifier.size(24.dp))
+            if (showRevealPasswordButton) {
+                IconButton(
+                    onClick = {
+                        showPassword = !showPassword
+                    },
+                    modifier = Modifier
+                        .size(24.dp)
+
+                ) {
+                    Icon(
+                        painter = painterResource(R.drawable.visibility_24px),
+                        contentDescription = "",
+                        tint = MaterialTheme.colors.secondary,
+                    )
+                }
+            }
+            if (showCopyToClipboardButton) {
+                IconButton(
+                    onClick = {
+                        clipboardManager.setText(AnnotatedString((stateValue)))
+                    },
+                    modifier = Modifier
+                        .size(24.dp)
+
+                ) {
+                    Icon(
+                        painter = painterResource(R.drawable.content_copy_24px),
+                        contentDescription = "",
+                        tint = MaterialTheme.colors.secondary
+                    )
+                }
+            }
+        }
+    }
 
     TextField(
         value = stateValue,
-        label = { Text(text = labelText) },
+        label = { Text(text = labelText, color = MaterialTheme.colors.primary) },
         onValueChange = onValueChange,
         keyboardOptions = keyboardOptions,
         colors = TextFieldDefaults.textFieldColors(
             backgroundColor = MaterialTheme.colors.background,
             unfocusedIndicatorColor = MaterialTheme.colors.secondary,
             unfocusedLabelColor = MaterialTheme.colors.secondary),
+        trailingIcon = trailingIcons,
+        visualTransformation = if (showPassword) VisualTransformation.None else PasswordVisualTransformation(),
         modifier = Modifier
             .fillMaxSize()
     )
